@@ -1,15 +1,110 @@
+# -------------------------
+# Android / IntelliJ
+# -------------------------
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+.idea/
+.gradle/
+build/
 local.properties
+
+# Android Studio
+captures/
+.externalNativeBuild/
+.cxx/
+output-metadata.json
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
+
+# -------------------------
+# macOS
+# -------------------------
+.DS_Store
+
+# -------------------------
+# Logs
+# -------------------------
+*.log
+
+# -------------------------
+# APK / App Bundles
+# -------------------------
+*.apk
+*.aab
+
+# -------------------------
+# Keystore Files
+# -------------------------
+*.jks
+*.keystore
+
+# -------------------------
+# Google Services
+# -------------------------
+google-services.json
+
+# -------------------------
+# Profiling
+# -------------------------
+*.hprof
+
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+ENV/
+
+# -------------------------
+# Jupyter
+# -------------------------
+.ipynb_checkpoints/
+
+# -------------------------
+# VS Code
+# -------------------------
+.vscode/
+
+# -------------------------
+# Environment Variables
+# -------------------------
+.env
+.env.*
+
+# -------------------------
+# Databases
+# -------------------------
+*.db
+*.sqlite
+*.sqlite3
+
+# -------------------------
+# AI Models
+# -------------------------
+models/checkpoints/
+models/*.ckpt
+models/*.pth
+models/*.pt
+
+# -------------------------
+# Datasets
+# -------------------------
+datasets/raw/
+datasets/private/
+datasets/temp/
+
+# -------------------------
+# Node
+# -------------------------
+node_modules/
+
+# -------------------------
+# Coverage
+# -------------------------
+coverage/
+htmlcov/
