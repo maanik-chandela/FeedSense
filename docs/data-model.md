@@ -1,113 +1,60 @@
-# FeedSense Data Model (Version 0.1)
+# FeedSense Data Model
 
-## Core Entities
+## 1. Vision
+- Mission
+- Long-term goals
+- Research philosophy
 
-### 1. Research Project
-Represents a research study.
+## 2. Core Principles
+- Platform independent
+- AI assisted
+- Research first
+- Privacy by design
+- Extensible architecture
 
-Fields:
-- Project ID
-- Name
-- Description
-- Platform
-- Created Date
+## 3. Entity Relationship Overview
+ResearchProject
+ └── Session
+      └── FeedItem
+           └── AIAnalysis
+ResearchProject
+ └── ResearchOutput
 
-Contains:
-- Multiple Sessions
+## 4. Entity Definitions
+### ResearchProject
+(fields + descriptions)
 
----
+### Session
+(fields + descriptions)
 
-### 2. Session
+### FeedItem
+(fields + descriptions)
 
-Represents one data collection session.
+### AIAnalysis
+(fields + descriptions)
 
-Fields:
-- Session ID
-- Project ID
-- Platform
-- Start Time
-- End Time
-- Duration
-- Status
-- Notes
+### ResearchOutput
+(fields + descriptions)
 
-Contains:
-- Multiple Feed Items
+## 5. AI Pipeline
+Screenshot → OCR → Vision Model → Segment Analysis → Topic Detection → Composition → Human Verification
 
----
+## 6. Future Features
+- Recommendation transition graph
+- Personalized AI learning
+- Cross-platform comparison
+- Web dashboard
+- Cloud synchronization
+- Plugin architecture
 
-### 3. Feed Item
+## 7. Open Questions
+- Multi-modal embeddings
+- Privacy-preserving storage
+- Federated learning
+- Real-time analysis
 
-Represents one reel/post/video observed.
-
-Fields:
-- Feed Item ID
-- Timestamp
-- Platform
-- Screenshot
-- OCR Text
-- Caption
-- Like Status
-- Watch Duration
-- AI Classification
-
----
-
-### 4. OCR Result
-
-Stores extracted text.
-
-Fields:
-- OCR ID
-- Text
-- Language
-- Confidence
-
----
-
-### 5. AI Classification
-
-Stores AI prediction.
-
-Fields:
-- Category
-- Confidence
-- Model Version
-- User Corrected
-- Final Category
-
----
-
-### 6. Screenshot
-
-Stores screenshot metadata.
-
-Fields:
-- Screenshot ID
-- File Path
-- Timestamp
-- Resolution
-
----
-
-### 7. Session Statistics
-
-Stores session summary.
-
-Fields:
-- Total Feed Items
-- Category Distribution
-- Average Confidence
-- Session Duration
-
----
-
-### 8. Export Report
-
-Stores exported files.
-
-Fields:
-- Export ID
-- Format
-- Time
-- File Path
+Date:5/08/2026
+- Finalized FeedSense data architecture.
+- Separated research entities from configuration.
+- Defined AI-assisted labeling workflow.
+- Planned implementation of Room Database and MVVM.
