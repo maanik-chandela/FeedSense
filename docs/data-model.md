@@ -58,3 +58,16 @@ Date:5/08/2026
 - Separated research entities from configuration.
 - Defined AI-assisted labeling workflow.
 - Planned implementation of Room Database and MVVM.
+
+## New Design Principles
+Never interrupt an active research session.
+All uncertain AI predictions are reviewed after the session.
+Introduced a dedicated Review Workspace.
+AI corrections are stored for future model improvement.
+Researcher reviews are performed before export.
+## New Entity
+ReviewItem
+Represents feed items that require human validation.
+Stores AI prediction, researcher correction, confidence, and correction reason.
+## Future Feature
+AI Weakness Report based on accumulated human corrections.
