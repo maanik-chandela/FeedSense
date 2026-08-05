@@ -86,3 +86,14 @@ Relationships between entities finalized.
 
 ## Future Refactor
 Replace string fields representing fixed choices (platform, status, content type, correction reason) with enums for better type safety.
+
+## Design Principle: Configurable over Hardcoded
+
+FeedSense should avoid hardcoded values whenever they represent concepts that may evolve over time.
+
+Examples:
+- Platforms
+- Categories
+- AI Models
+- Export Formats
+- Review Thresholds
