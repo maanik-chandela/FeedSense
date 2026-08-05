@@ -71,3 +71,18 @@ Represents feed items that require human validation.
 Stores AI prediction, researcher correction, confidence, and correction reason.
 ## Future Feature
 AI Weakness Report based on accumulated human corrections.
+
+## Implemented Core Entities
+ResearchProject
+ProjectConfiguration
+Session
+FeedItem (v1)
+AIAnalysis (v1)
+ReviewItem
+
+## Architecture Decision
+Core entities are implemented before Room Database.
+Relationships between entities finalized.
+
+## Future Refactor
+Replace string fields representing fixed choices (platform, status, content type, correction reason) with enums for better type safety.
