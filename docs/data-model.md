@@ -107,3 +107,82 @@ Milestone 5.1 completed
 Started Milestone 5.2
 - Migrated project to use Room with KSP.
 - Adopted modern Android persistence architecture.
+
+
+ResearchProject stores research metadata instead of only application metadata.
+
+Mandatory:
+- Title
+- Research Question
+- Platform
+
+Optional:
+- Description
+- Hypothesis
+- Owner
+
+Automatically maintained:
+- Session Count
+- Feed Item Count
+- Created At
+- Updated At
+- Archived
+
+UI Architecture Decision
+
+FeedSense Home Screen manages Research Projects, not Sessions.
+
+Each Session must belong to exactly one Research Project.
+
+A user can create multiple Research Projects.
+
+Each Research Project contains:
+- Multiple Sessions
+- Multiple Feed Items
+- AI Analysis
+- Researcher Review
+- Exportable Dataset
+
+  Home Screen (v1)
+
+Purpose:
+- Display current research project.
+- Create a new research project.
+- Open previous research projects.
+- Continue the active research session.
+
+The Home screen is not responsible for creating or storing observations.
+All observations belong to Sessions.
+All Sessions belong to exactly one Research Project.
+
+Home Screen Redesign (v1)
+
+The Home screen is a dashboard, not a session manager.
+
+Responsibilities:
+- Welcome the researcher.
+- Display the active research project.
+- Create new research projects.
+- Open existing research projects.
+- Continue the active research session.
+
+Sessions are always created inside a Research Project.
+Research Projects are the top-level entity in FeedSense.
+
+Milestone 5.3 Completed
+
+Research Project Management
+
+Features:
+- Persistent Research Projects using Room
+- Home Dashboard
+- Project Creation
+- Projects Listing
+- Navigation between Home, Create Project and Projects
+- Foundation for Active Project selection
+
+Upcoming:
+- Active Project Management
+- Background Session Service
+- Accessibility Integration
+  
