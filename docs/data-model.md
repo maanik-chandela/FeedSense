@@ -103,3 +103,7 @@ Milestone 5.1 completed
 ✓ Entity relationships finalized.
 ✓ Chose configurable data structures over enums.
 ✓ Ready to implement Room persistence.
+
+Started Milestone 5.2
+- Migrated project to use Room with KSP.
+- Adopted modern Android persistence architecture.
