@@ -185,4 +185,33 @@ Upcoming:
 - Active Project Management
 - Background Session Service
 - Accessibility Integration
-  
+
+7/08/2026
+Session model supports multiple sessions per research project. A researcher may work on any project on any day/pattern and can switch between projects. "Current Project" means the project currently selected/viewed, not a permanently active project. Only one recording session may be RUNNING at a time. Project listings should show latest-session information such as start/end time, duration, session count, and observation count.
+
+## Research Session
+
+A Research Session represents one observation period within a Research Project.
+
+A project can contain multiple sessions. Sessions are independent records and can be created on different days or at different times.
+
+### ResearchSession
+
+- `id` — unique session identifier
+- `projectId` — ID of the ResearchProject this session belongs to
+- `title` — researcher-defined session title
+- `startedAt` — session start timestamp
+- `endedAt` — session end timestamp; nullable while active
+- `observationCount` — number of observations recorded during the session
+- `notes` — optional researcher notes
+- `active` — indicates whether the session is currently active
+
+### Session Rules
+
+- A Research Project can have many Research Sessions.
+- A researcher can work on different projects on different days.
+- Only one Research Session can be active at a time.
+- A session can be ended and retained permanently in session history.
+- Existing sessions are selected from session history rather than automatically resumed.
+- Session start and end times are stored for later analysis.
+- Observations will belong to a specific Research Session.
