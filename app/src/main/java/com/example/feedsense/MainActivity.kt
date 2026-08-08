@@ -4,44 +4,43 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.feedsense.di.ProjectViewModelFactory
+import com.example.feedsense.di.SessionViewModelFactory
+import com.example.feedsense.navigation.AppNavigation
 import com.example.feedsense.ui.theme.FeedSenseTheme
+import com.example.feedsense.viewmodel.ProjectViewModel
+import com.example.feedsense.viewmodel.SessionViewModel
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
+
         setContent {
             FeedSenseTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+
+                val app = application as FeedSenseApplication
+
+                val projectViewModel: ProjectViewModel = viewModel(
+                    factory = ProjectViewModelFactory(
+                        app.repository
                     )
-                }
+                )
+
+                val sessionViewModel: SessionViewModel = viewModel(
+                    factory = SessionViewModelFactory(
+                        app.sessionRepository
+                    )
+                )
+
+                AppNavigation(
+                    projectViewModel = projectViewModel,
+                    sessionViewModel = sessionViewModel
+                )
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    FeedSenseTheme {
-        Greeting("Android")
     }
 }
