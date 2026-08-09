@@ -215,3 +215,91 @@ A project can contain multiple sessions. Sessions are independent records and ca
 - Existing sessions are selected from session history rather than automatically resumed.
 - Session start and end times are stored for later analysis.
 - Observations will belong to a specific Research Session.
+
+FeedSense Data Model — Progress: Today
+
+Entities implemented:
+
+1. ResearchProject
+   - Project-level research container
+
+2. ResearchSession
+   - Belongs to ResearchProject
+   - Supports active/completed/reopened state
+   - Stores session timing
+   - Stores observation count
+
+3. ResearchObservation
+   - Belongs to ResearchSession
+   - Stores manually recorded researcher observations
+   - Stores creation timestamp
+
+4. CapturedFrame
+   - Belongs to ResearchSession
+   - Stores captured image file path
+   - Stores capture timestamp
+   - Stores analysis status
+   - Supports pending-analysis workflow
+
+Database:
+
+FeedSenseDatabase
+Version: 4
+
+DAOs:
+
+ProjectDao
+SessionDao
+ObservationDao
+CaptureDao
+
+Repositories:
+
+SessionRepository
+
+Capture pipeline:
+
+MediaProjection
+    ↓
+ScreenCaptureService
+    ↓
+ImageReader
+    ↓
+Bitmap
+    ↓
+JPEG
+    ↓
+App-private storage
+    ↓
+CapturedFrame Room record
+
+Capture protections:
+
+- Frame throttling
+- Duplicate-frame detection
+- Maximum frame retention
+- Session-specific storage
+- Latest-image acquisition
+- Bitmap/Image cleanup
+
+Analysis groundwork:
+
+CapturedFrame.analysisStatus
+    ↓
+PENDING
+    ↓
+FrameAnalysisScheduler
+    ↓
+Future WorkManager analysis pipeline
+
+Not completed yet:
+
+- Actual AI frame analysis
+- Analysis result model
+- Analysis worker implementation
+- Observation ↔ frame relationship
+- Timeline
+- Search/filtering
+- Export
+- Capture-service stop when session ends
+- Production hardening
