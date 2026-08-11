@@ -303,3 +303,229 @@ Not completed yet:
 - Export
 - Capture-service stop when session ends
 - Production hardening
+
+## Research Session & Background Capture Update
+
+### 2026-08-10 / 2026-08-11
+
+### Research Session Implementation
+
+The Research Session data model and persistence flow were extended to support multiple sessions per research project.
+
+A `ResearchSession` belongs to exactly one `ResearchProject` through `projectId`.
+
+Implemented session fields include:
+
+* `id`
+* `projectId`
+* `title`
+* `startedAt`
+* `endedAt`
+* `observationCount`
+* `notes`
+* `active`
+
+Session rules:
+
+* A Research Project can contain multiple Research Sessions.
+* Sessions are retained after completion.
+* Only one recording session should be active at a time.
+* Session history is persistent.
+* Observations belong to a specific Research Session.
+* Captured screen frames belong to a specific Research Session.
+* A session can be reopened for another run.
+
+### Research Observations
+
+Research observations are stored separately from captured screen frames.
+
+Each observation belongs to a session through `sessionId`.
+
+The current observation model supports:
+
+* `id`
+* `sessionId`
+* `text`
+* `createdAt`
+
+Observation counts are maintained at the session level.
+
+### Captured Frame Model
+
+A new `CapturedFrame` entity was introduced for storing screenshots collected during an active research session.
+
+Current fields:
+
+* `id`
+* `sessionId`
+* `filePath`
+* `capturedAt`
+* `analysisStatus`
+* `analysisResult`
+* `analyzedAt`
+
+Each captured frame therefore has a complete relationship:
+
+`ResearchProject → ResearchSession → CapturedFrame`
+
+The frame file itself is stored locally, while the database stores its file path and analysis metadata.
+
+### Background Screen Capture
+
+FeedSense now supports background screen capture through Android MediaProjection.
+
+The capture architecture uses:
+
+* `ScreenCaptureService`
+* `CaptureManager`
+* `MediaProjection`
+* `VirtualDisplay`
+* `ImageReader`
+
+Screen capture is designed to continue while the researcher is interacting with another application.
+
+The active research session remains the owner of the captured frames.
+
+### Local-First Frame Processing
+
+Captured frames are processed through a background analysis pipeline.
+
+Current pipeline:
+
+`Screen Capture → CapturedFrame → Background Worker → Frame Analyzer → Analysis Result`
+
+The system uses WorkManager for background frame analysis.
+
+Analysis work does not require network connectivity.
+
+This establishes the foundation for the project's privacy-first and budget-conscious AI architecture.
+
+### OCR Analysis
+
+Local OCR has been integrated into the frame analysis pipeline using on-device text recognition.
+
+Current OCR output can identify visible text in captured frames.
+
+The structured analysis result can contain:
+
+* analysis status
+* file name
+* image dimensions
+* file size
+* message
+* visible text
+* screen type
+* application
+* activity
+* confidence
+
+At the current stage, OCR provides actual visible-text extraction while higher-level semantic fields remain available for future vision analysis.
+
+### Local Analysis Foundation
+
+A local frame analyzer has also been established.
+
+The current local analyzer verifies the frame file and extracts basic image information such as:
+
+* width
+* height
+* file size
+* successful local processing status
+
+Higher-level understanding such as application identification, content category, activity, and semantic classification is intentionally reserved for the next AI milestones.
+
+### Frame Analysis States
+
+Captured frames use explicit analysis states:
+
+* `PENDING`
+* `PROCESSING`
+* `ANALYZED`
+* `FAILED`
+
+This allows the background pipeline to distinguish frames waiting for analysis, frames currently being processed, successfully analyzed frames, and failed analysis attempts.
+
+### Human Verification Principle
+
+The data model continues to follow the principle:
+
+> Never interrupt an active research session.
+
+AI predictions that are uncertain should eventually be accumulated for researcher review after the session.
+
+Researcher corrections are intended to become training/feedback data for improving future FeedSense models.
+
+### Milestone 7A Direction — Intelligent Frame Change Detection
+
+The next stage of the background capture system is being designed around local frame-change detection.
+
+The intended architecture is:
+
+`Background Screen Capture → Local Change Detection → Significant Frame → CapturedFrame → Local Analysis`
+
+The change detector should:
+
+* avoid storing identical or nearly identical frames;
+* detect meaningful visual changes locally;
+* operate continuously during an active session;
+* capture short-lived content changes;
+* preserve very short feed items that may appear for only a few seconds;
+* reduce unnecessary storage and AI/OCR processing;
+* avoid requiring cloud AI for basic frame-change detection.
+
+This is intentionally a local preprocessing layer rather than an AI classification layer.
+
+### Long-Term AI Direction
+
+FeedSense will use a hybrid architecture with a strong local-first AI pipeline.
+
+The local system should perform as much processing as practical to control operating costs and preserve privacy.
+
+Cloud AI should be reserved for cases where local analysis is insufficient or where higher-level semantic reasoning is required.
+
+The long-term pipeline is:
+
+`Screen Capture → Local Change Detection → Local OCR/Vision → Content Understanding → Category Classification → Session Data → Human Review`
+
+Ambiguous or low-confidence content should be eligible for later researcher review.
+
+Researcher corrections should become feedback data for improving the local model over time.
+
+### Budget Constraint
+
+The current project direction prioritizes a highly capable local AI system to minimize recurring cloud inference costs.
+
+Target operating cost:
+
+**Maximum target: approximately ₹50 per user per month**
+
+The architecture should therefore prefer:
+
+* on-device processing;
+* local frame comparison;
+* local OCR;
+* local classification where practical;
+* batching;
+* selective frame persistence;
+* selective cloud inference only when necessary.
+
+This constraint is now considered an architectural requirement for future AI milestones.
+
+### Current Data Architecture
+
+The current conceptual data flow is:
+
+`ResearchProject`
+→ `ResearchSession`
+→ `CapturedFrame`
+→ `AIAnalysis`
+
+with researcher observations and future `ReviewItem` records associated with the relevant session/content.
+
+The architecture remains configurable rather than hardcoding evolving concepts such as platforms, categories, AI models, and review thresholds.
+
+### Next Development Stage
+
+The immediate next implementation milestone is **7A: Intelligent Screen-Change Detection**.
+
+The goal is to improve the existing background capture pipeline rather than replace the current session, database, navigation, or analysis architecture.
