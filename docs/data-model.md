@@ -215,3 +215,53 @@ A project can contain multiple sessions. Sessions are independent records and ca
 - Existing sessions are selected from session history rather than automatically resumed.
 - Session start and end times are stored for later analysis.
 - Observations will belong to a specific Research Session.
+
+## Milestone 7 — Local AI Feed Understanding
+
+Status as of 13/08/2026.
+
+### 7A — Local AI foundation ✅
+
+- `FrameAnalyzer` interface: `analyze(file): FrameAnalysisResult`
+- `LocalFrameAnalyzer` (OCR + heuristic classification, fully offline)
+- `CloudFrameAnalyzer` interface + `UnconfiguredCloudAnalyzer` placeholder (cloud fallback only)
+- `ConfidenceGate` (local threshold 0.65, ambiguity threshold 0.7)
+- `FrameAnalysisPipeline`: local -> confidence gate -> cloud fallback -> needs-review
+- Structured `FrameAnalysisResult`: visibleText, contentCategory, secondaryCategories,
+  confidence, contentType, ambiguityScore, modelVersion, source (LOCAL/CLOUD/HUMAN),
+  disposition, needsReview
+
+### 7B — Review queue / uncertain frames ✅
+
+- `LabeledReference` entity: AI prediction + human validation (labelSource, validationStatus)
+- Cloud results stored as PENDING references; only human-validated rows become training data
+- `ReviewScreen` / `ReviewViewModel` for human classification of uncertain frames
+
+### 7C — Feed items ✅
+
+- `FeedItem` entity: grouped content pieces from analyzed frames
+- Segmentation heuristics: time gap + category; unknown-category frames merge within 3s
+- durationSeconds, mode category, average confidence, skipped (<5s),
+  contentType (<=90s = SHORT_VIDEO), interactionSignals
+- Auto `[AI]` observation per item; observation count resynced (idempotent rebuild)
+- `FeedItemBuilderWorker` + `FeedItemScheduler`
+
+### 7D — Interaction + content understanding ✅
+
+- `InteractionDetector`: evidence-based signals only (like_indicator, comment_indicator,
+  share_indicator, save_indicator, follow_indicator, playback_paused, playback_playing)
+- `topic` (subcategory, e.g. cricket) + `tone` (EDUCATIONAL/COMEDIC/... ) added to
+  classification, `FrameAnalysisResult`, and `FeedItem` (heuristic-v2)
+- `PerceptualHash` (64-bit dHash) stored per frame (`frameFingerprint`); segmentation
+  splits consecutive frames when hash distance >= 24/64 to separate back-to-back Reels
+- FeedItem stores representative frame fingerprint for future revisit/return detection
+- DB version 10 (destructive migration in dev)
+
+### Upcoming
+
+- 7E local AI learning from user corrections
+- 7F background autonomous processing
+- 7G local model optimization + confidence system
+- 7H hybrid cloud fallback
+- 7I long-term personalization
+- 7J end-of-session research report
