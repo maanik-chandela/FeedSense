@@ -1,0 +1,1666 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 26,
+    "identityHash": "27ba04e0d503c3b624decebbb97da431",
+    "entities": [
+      {
+        "tableName": "research_projects",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `researchQuestion` TEXT NOT NULL, `hypothesis` TEXT NOT NULL, `platform` TEXT NOT NULL, `owner` TEXT NOT NULL, `createdAt` TEXT NOT NULL, `updatedAt` TEXT NOT NULL, `sessionCount` INTEGER NOT NULL, `feedItemCount` INTEGER NOT NULL, `archived` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "researchQuestion",
+            "columnName": "researchQuestion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hypothesis",
+            "columnName": "hypothesis",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "platform",
+            "columnName": "platform",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "owner",
+            "columnName": "owner",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionCount",
+            "columnName": "sessionCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "feedItemCount",
+            "columnName": "feedItemCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "archived",
+            "columnName": "archived",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "research_sessions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `projectId` TEXT NOT NULL, `title` TEXT NOT NULL, `startedAt` TEXT NOT NULL, `endedAt` TEXT, `observationCount` INTEGER NOT NULL, `notes` TEXT NOT NULL, `active` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "projectId",
+            "columnName": "projectId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startedAt",
+            "columnName": "startedAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endedAt",
+            "columnName": "endedAt",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "observationCount",
+            "columnName": "observationCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "active",
+            "columnName": "active",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "research_observations",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `text` TEXT NOT NULL, `createdAt` TEXT NOT NULL, `source` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "text",
+            "columnName": "text",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "captured_frames",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `filePath` TEXT NOT NULL, `capturedAt` TEXT NOT NULL, `analysisStatus` TEXT NOT NULL, `analysisResult` TEXT, `analyzedAt` TEXT, `frameFingerprint` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filePath",
+            "columnName": "filePath",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "capturedAt",
+            "columnName": "capturedAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "analysisStatus",
+            "columnName": "analysisStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "analysisResult",
+            "columnName": "analysisResult",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "analyzedAt",
+            "columnName": "analyzedAt",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "frameFingerprint",
+            "columnName": "frameFingerprint",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "idx_captured_frames_session_status",
+            "unique": false,
+            "columnNames": [
+              "sessionId",
+              "analysisStatus"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_captured_frames_session_status` ON `${TABLE_NAME}` (`sessionId`, `analysisStatus`)"
+          },
+          {
+            "name": "idx_captured_frames_status",
+            "unique": false,
+            "columnNames": [
+              "analysisStatus"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_captured_frames_status` ON `${TABLE_NAME}` (`analysisStatus`)"
+          },
+          {
+            "name": "idx_captured_frames_session_fingerprint",
+            "unique": false,
+            "columnNames": [
+              "sessionId",
+              "frameFingerprint"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_captured_frames_session_fingerprint` ON `${TABLE_NAME}` (`sessionId`, `frameFingerprint`)"
+          }
+        ]
+      },
+      {
+        "tableName": "labeled_references",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `frameId` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `filePath` TEXT NOT NULL, `feedItemId` TEXT, `aiCategory` TEXT, `aiConfidence` REAL, `aiSource` TEXT NOT NULL, `modelVersion` TEXT, `candidateCategories` TEXT NOT NULL, `platform` TEXT, `topic` TEXT, `tone` TEXT, `visibleText` TEXT, `aiReason` TEXT, `interactionSignals` TEXT NOT NULL, `frameFingerprint` TEXT, `labelSource` TEXT NOT NULL, `validationStatus` TEXT NOT NULL, `validatedLabel` TEXT, `agreement` INTEGER, `createdAt` TEXT NOT NULL, `reviewedAt` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frameId",
+            "columnName": "frameId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filePath",
+            "columnName": "filePath",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "feedItemId",
+            "columnName": "feedItemId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "aiCategory",
+            "columnName": "aiCategory",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "aiConfidence",
+            "columnName": "aiConfidence",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "aiSource",
+            "columnName": "aiSource",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelVersion",
+            "columnName": "modelVersion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "candidateCategories",
+            "columnName": "candidateCategories",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "platform",
+            "columnName": "platform",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "topic",
+            "columnName": "topic",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "tone",
+            "columnName": "tone",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "visibleText",
+            "columnName": "visibleText",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "aiReason",
+            "columnName": "aiReason",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "interactionSignals",
+            "columnName": "interactionSignals",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frameFingerprint",
+            "columnName": "frameFingerprint",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "labelSource",
+            "columnName": "labelSource",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "validationStatus",
+            "columnName": "validationStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "validatedLabel",
+            "columnName": "validatedLabel",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "agreement",
+            "columnName": "agreement",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reviewedAt",
+            "columnName": "reviewedAt",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "idx_labeled_references_status",
+            "unique": false,
+            "columnNames": [
+              "validationStatus"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_labeled_references_status` ON `${TABLE_NAME}` (`validationStatus`)"
+          },
+          {
+            "name": "idx_labeled_references_frame",
+            "unique": false,
+            "columnNames": [
+              "frameId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_labeled_references_frame` ON `${TABLE_NAME}` (`frameId`)"
+          },
+          {
+            "name": "idx_labeled_references_session_item",
+            "unique": false,
+            "columnNames": [
+              "sessionId",
+              "feedItemId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_labeled_references_session_item` ON `${TABLE_NAME}` (`sessionId`, `feedItemId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "feed_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `startTime` TEXT NOT NULL, `endTime` TEXT, `durationSeconds` INTEGER NOT NULL, `category` TEXT, `categoryDomain` TEXT, `confidence` REAL, `topic` TEXT, `tone` TEXT, `contentType` TEXT NOT NULL, `skipped` INTEGER NOT NULL, `representativeFramePath` TEXT NOT NULL, `frameCount` INTEGER NOT NULL, `interactionSignals` TEXT NOT NULL, `modelVersion` TEXT, `frameFingerprint` TEXT, `needsReview` INTEGER NOT NULL, `candidateCategories` TEXT NOT NULL, `classificationReason` TEXT, `updatedAt` TEXT NOT NULL, `contentTransitions` TEXT NOT NULL, `interactionEvidence` TEXT NOT NULL, `secondaryCategory` TEXT, `secondaryCategories` TEXT NOT NULL, `categoryScores` TEXT NOT NULL, `mixedContent` INTEGER NOT NULL, `pausedDurationSeconds` INTEGER NOT NULL, `activeWatchDurationSeconds` INTEGER NOT NULL, `uncertaintyLevel` TEXT NOT NULL, `source` TEXT NOT NULL, `platform` TEXT, `researcherCategory` TEXT, `researcherTopic` TEXT, `researcherNotes` TEXT, `researcherLiked` INTEGER NOT NULL, `researcherSkipped` INTEGER NOT NULL, `researcherCommented` INTEGER NOT NULL, `researcherShared` INTEGER NOT NULL, `researcherSaved` INTEGER NOT NULL, `researcherFollowed` INTEGER NOT NULL, `researcherPaused` INTEGER NOT NULL, `researcherReplayed` INTEGER NOT NULL, `appContext` TEXT, `chromeOnly` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startTime",
+            "columnName": "startTime",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endTime",
+            "columnName": "endTime",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "durationSeconds",
+            "columnName": "durationSeconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "categoryDomain",
+            "columnName": "categoryDomain",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "confidence",
+            "columnName": "confidence",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "topic",
+            "columnName": "topic",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "tone",
+            "columnName": "tone",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "contentType",
+            "columnName": "contentType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "skipped",
+            "columnName": "skipped",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "representativeFramePath",
+            "columnName": "representativeFramePath",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frameCount",
+            "columnName": "frameCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "interactionSignals",
+            "columnName": "interactionSignals",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelVersion",
+            "columnName": "modelVersion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "frameFingerprint",
+            "columnName": "frameFingerprint",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "needsReview",
+            "columnName": "needsReview",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "candidateCategories",
+            "columnName": "candidateCategories",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "classificationReason",
+            "columnName": "classificationReason",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contentTransitions",
+            "columnName": "contentTransitions",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "interactionEvidence",
+            "columnName": "interactionEvidence",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "secondaryCategory",
+            "columnName": "secondaryCategory",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "secondaryCategories",
+            "columnName": "secondaryCategories",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "categoryScores",
+            "columnName": "categoryScores",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mixedContent",
+            "columnName": "mixedContent",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pausedDurationSeconds",
+            "columnName": "pausedDurationSeconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeWatchDurationSeconds",
+            "columnName": "activeWatchDurationSeconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uncertaintyLevel",
+            "columnName": "uncertaintyLevel",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "platform",
+            "columnName": "platform",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "researcherCategory",
+            "columnName": "researcherCategory",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "researcherTopic",
+            "columnName": "researcherTopic",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "researcherNotes",
+            "columnName": "researcherNotes",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "researcherLiked",
+            "columnName": "researcherLiked",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "researcherSkipped",
+            "columnName": "researcherSkipped",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "researcherCommented",
+            "columnName": "researcherCommented",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "researcherShared",
+            "columnName": "researcherShared",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "researcherSaved",
+            "columnName": "researcherSaved",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "researcherFollowed",
+            "columnName": "researcherFollowed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "researcherPaused",
+            "columnName": "researcherPaused",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "researcherReplayed",
+            "columnName": "researcherReplayed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appContext",
+            "columnName": "appContext",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "chromeOnly",
+            "columnName": "chromeOnly",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "idx_feed_items_session",
+            "unique": false,
+            "columnNames": [
+              "sessionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_feed_items_session` ON `${TABLE_NAME}` (`sessionId`)"
+          },
+          {
+            "name": "idx_feed_items_session_updated",
+            "unique": false,
+            "columnNames": [
+              "sessionId",
+              "updatedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_feed_items_session_updated` ON `${TABLE_NAME}` (`sessionId`, `updatedAt`)"
+          }
+        ]
+      },
+      {
+        "tableName": "model_feedback",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `frameId` TEXT, `feedItemId` TEXT, `sessionId` TEXT NOT NULL, `platform` TEXT, `visibleText` TEXT, `interactionSignals` TEXT NOT NULL, `originalCategory` TEXT, `originalConfidence` REAL, `originalTopic` TEXT, `originalTone` TEXT, `modelVersion` TEXT, `correctedCategory` TEXT, `correctedTopic` TEXT, `correctedTone` TEXT, `correctionSource` TEXT NOT NULL, `confidenceAfterCorrection` REAL, `categoryAgreement` INTEGER NOT NULL, `topicAgreement` INTEGER, `toneAgreement` INTEGER, `createdAt` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frameId",
+            "columnName": "frameId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "feedItemId",
+            "columnName": "feedItemId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "platform",
+            "columnName": "platform",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "visibleText",
+            "columnName": "visibleText",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "interactionSignals",
+            "columnName": "interactionSignals",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "originalCategory",
+            "columnName": "originalCategory",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "originalConfidence",
+            "columnName": "originalConfidence",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "originalTopic",
+            "columnName": "originalTopic",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "originalTone",
+            "columnName": "originalTone",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "modelVersion",
+            "columnName": "modelVersion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "correctedCategory",
+            "columnName": "correctedCategory",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "correctedTopic",
+            "columnName": "correctedTopic",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "correctedTone",
+            "columnName": "correctedTone",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "correctionSource",
+            "columnName": "correctionSource",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "confidenceAfterCorrection",
+            "columnName": "confidenceAfterCorrection",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "categoryAgreement",
+            "columnName": "categoryAgreement",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "topicAgreement",
+            "columnName": "topicAgreement",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "toneAgreement",
+            "columnName": "toneAgreement",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "cloud_usage_records",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT, `frameId` TEXT, `feedItemId` TEXT, `filePath` TEXT, `requestedAt` TEXT NOT NULL, `requestType` TEXT NOT NULL, `estimatedCostRupees` REAL NOT NULL, `allowed` INTEGER NOT NULL, `reason` TEXT NOT NULL, `modelVersion` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "frameId",
+            "columnName": "frameId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "feedItemId",
+            "columnName": "feedItemId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "filePath",
+            "columnName": "filePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "requestedAt",
+            "columnName": "requestedAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requestType",
+            "columnName": "requestType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "estimatedCostRupees",
+            "columnName": "estimatedCostRupees",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "allowed",
+            "columnName": "allowed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reason",
+            "columnName": "reason",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelVersion",
+            "columnName": "modelVersion",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "cloud_usage_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `monthKey` TEXT NOT NULL, `dayKey` TEXT NOT NULL, `monthlyEstimatedRupees` REAL NOT NULL, `dailyEstimatedRupees` REAL NOT NULL, `requestCount` INTEGER NOT NULL, `lastUpdated` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "monthKey",
+            "columnName": "monthKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dayKey",
+            "columnName": "dayKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "monthlyEstimatedRupees",
+            "columnName": "monthlyEstimatedRupees",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dailyEstimatedRupees",
+            "columnName": "dailyEstimatedRupees",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requestCount",
+            "columnName": "requestCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "lastUpdated",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "evaluation_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `feedItemId` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `projectId` TEXT, `modelVersion` TEXT, `datasetVersion` TEXT, `evaluationStatus` TEXT NOT NULL, `createdAt` TEXT NOT NULL, `enqueuedAt` TEXT NOT NULL, `completedAt` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "feedItemId",
+            "columnName": "feedItemId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "projectId",
+            "columnName": "projectId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "modelVersion",
+            "columnName": "modelVersion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "datasetVersion",
+            "columnName": "datasetVersion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "evaluationStatus",
+            "columnName": "evaluationStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "enqueuedAt",
+            "columnName": "enqueuedAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completedAt",
+            "columnName": "completedAt",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "idx_evaluation_items_feed_item",
+            "unique": false,
+            "columnNames": [
+              "feedItemId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_evaluation_items_feed_item` ON `${TABLE_NAME}` (`feedItemId`)"
+          },
+          {
+            "name": "idx_evaluation_items_session",
+            "unique": false,
+            "columnNames": [
+              "sessionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_evaluation_items_session` ON `${TABLE_NAME}` (`sessionId`)"
+          },
+          {
+            "name": "idx_evaluation_items_dataset",
+            "unique": false,
+            "columnNames": [
+              "datasetVersion"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_evaluation_items_dataset` ON `${TABLE_NAME}` (`datasetVersion`)"
+          },
+          {
+            "name": "idx_evaluation_items_status",
+            "unique": false,
+            "columnNames": [
+              "evaluationStatus"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_evaluation_items_status` ON `${TABLE_NAME}` (`evaluationStatus`)"
+          }
+        ]
+      },
+      {
+        "tableName": "ai_predictions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `evaluationItemId` TEXT NOT NULL, `predictedAt` TEXT NOT NULL, `source` TEXT, `modelVersion` TEXT, `category` TEXT, `categoryDomain` TEXT, `confidence` REAL, `secondaryCategories` TEXT NOT NULL, `categoryScores` TEXT NOT NULL, `platform` TEXT, `contentType` TEXT, `durationSeconds` INTEGER NOT NULL, `skipped` INTEGER NOT NULL, `interactionSignals` TEXT NOT NULL, `topic` TEXT, `tone` TEXT, `uncertaintyLevel` TEXT NOT NULL, `needsReview` INTEGER NOT NULL, `feedItemId` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "evaluationItemId",
+            "columnName": "evaluationItemId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "predictedAt",
+            "columnName": "predictedAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "modelVersion",
+            "columnName": "modelVersion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "categoryDomain",
+            "columnName": "categoryDomain",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "confidence",
+            "columnName": "confidence",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "secondaryCategories",
+            "columnName": "secondaryCategories",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "categoryScores",
+            "columnName": "categoryScores",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "platform",
+            "columnName": "platform",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "contentType",
+            "columnName": "contentType",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "durationSeconds",
+            "columnName": "durationSeconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "skipped",
+            "columnName": "skipped",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "interactionSignals",
+            "columnName": "interactionSignals",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "topic",
+            "columnName": "topic",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "tone",
+            "columnName": "tone",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "uncertaintyLevel",
+            "columnName": "uncertaintyLevel",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "needsReview",
+            "columnName": "needsReview",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "feedItemId",
+            "columnName": "feedItemId",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "idx_ai_predictions_evaluation_item",
+            "unique": false,
+            "columnNames": [
+              "evaluationItemId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_ai_predictions_evaluation_item` ON `${TABLE_NAME}` (`evaluationItemId`)"
+          },
+          {
+            "name": "idx_ai_predictions_model_version",
+            "unique": false,
+            "columnNames": [
+              "modelVersion"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_ai_predictions_model_version` ON `${TABLE_NAME}` (`modelVersion`)"
+          }
+        ]
+      },
+      {
+        "tableName": "ground_truths",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `evaluationItemId` TEXT NOT NULL, `annotatorId` TEXT, `recordedAt` TEXT NOT NULL, `category` TEXT, `categoryDomain` TEXT, `secondaryCategories` TEXT NOT NULL, `ambiguity` TEXT NOT NULL, `platform` TEXT, `contentType` TEXT, `durationSeconds` INTEGER, `skipped` INTEGER, `liked` INTEGER, `commented` INTEGER, `shared` INTEGER, `saved` INTEGER, `followed` INTEGER, `paused` INTEGER, `playing` INTEGER, `interactionSignals` TEXT NOT NULL, `topic` TEXT, `tone` TEXT, `notes` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "evaluationItemId",
+            "columnName": "evaluationItemId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "annotatorId",
+            "columnName": "annotatorId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "recordedAt",
+            "columnName": "recordedAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "categoryDomain",
+            "columnName": "categoryDomain",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "secondaryCategories",
+            "columnName": "secondaryCategories",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ambiguity",
+            "columnName": "ambiguity",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "platform",
+            "columnName": "platform",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "contentType",
+            "columnName": "contentType",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "durationSeconds",
+            "columnName": "durationSeconds",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "skipped",
+            "columnName": "skipped",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "liked",
+            "columnName": "liked",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "commented",
+            "columnName": "commented",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "shared",
+            "columnName": "shared",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "saved",
+            "columnName": "saved",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "followed",
+            "columnName": "followed",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "paused",
+            "columnName": "paused",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "playing",
+            "columnName": "playing",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "interactionSignals",
+            "columnName": "interactionSignals",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "topic",
+            "columnName": "topic",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "tone",
+            "columnName": "tone",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "idx_ground_truths_evaluation_item",
+            "unique": false,
+            "columnNames": [
+              "evaluationItemId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_ground_truths_evaluation_item` ON `${TABLE_NAME}` (`evaluationItemId`)"
+          },
+          {
+            "name": "idx_ground_truths_annotator",
+            "unique": false,
+            "columnNames": [
+              "annotatorId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_ground_truths_annotator` ON `${TABLE_NAME}` (`annotatorId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "evaluation_results",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `evaluationItemId` TEXT NOT NULL, `groundTruthId` TEXT NOT NULL, `aiPredictionId` TEXT NOT NULL, `modelVersion` TEXT, `datasetVersion` TEXT, `evaluationMethodVersion` TEXT NOT NULL, `comparable` INTEGER NOT NULL, `segmentationError` TEXT, `verdict` TEXT NOT NULL, `categoryCorrect` INTEGER, `secondaryMatch` INTEGER, `topicAgreement` INTEGER, `toneAgreement` INTEGER, `platformAgreement` INTEGER, `contentTypeAgreement` INTEGER, `durationInaccurate` INTEGER, `durationErrorSeconds` INTEGER, `skippedAgreement` INTEGER, `interactionSignalsDisagreement` INTEGER, `recordedAt` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "evaluationItemId",
+            "columnName": "evaluationItemId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "groundTruthId",
+            "columnName": "groundTruthId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "aiPredictionId",
+            "columnName": "aiPredictionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelVersion",
+            "columnName": "modelVersion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "datasetVersion",
+            "columnName": "datasetVersion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "evaluationMethodVersion",
+            "columnName": "evaluationMethodVersion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "comparable",
+            "columnName": "comparable",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "segmentationError",
+            "columnName": "segmentationError",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "verdict",
+            "columnName": "verdict",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "categoryCorrect",
+            "columnName": "categoryCorrect",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "secondaryMatch",
+            "columnName": "secondaryMatch",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "topicAgreement",
+            "columnName": "topicAgreement",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "toneAgreement",
+            "columnName": "toneAgreement",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "platformAgreement",
+            "columnName": "platformAgreement",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "contentTypeAgreement",
+            "columnName": "contentTypeAgreement",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "durationInaccurate",
+            "columnName": "durationInaccurate",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "durationErrorSeconds",
+            "columnName": "durationErrorSeconds",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "skippedAgreement",
+            "columnName": "skippedAgreement",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "interactionSignalsDisagreement",
+            "columnName": "interactionSignalsDisagreement",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "recordedAt",
+            "columnName": "recordedAt",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "idx_evaluation_results_evaluation_item",
+            "unique": false,
+            "columnNames": [
+              "evaluationItemId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_evaluation_results_evaluation_item` ON `${TABLE_NAME}` (`evaluationItemId`)"
+          },
+          {
+            "name": "idx_evaluation_results_ground_truth",
+            "unique": false,
+            "columnNames": [
+              "groundTruthId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_evaluation_results_ground_truth` ON `${TABLE_NAME}` (`groundTruthId`)"
+          },
+          {
+            "name": "idx_evaluation_results_verdict",
+            "unique": false,
+            "columnNames": [
+              "verdict"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_evaluation_results_verdict` ON `${TABLE_NAME}` (`verdict`)"
+          },
+          {
+            "name": "idx_evaluation_results_model_dataset",
+            "unique": false,
+            "columnNames": [
+              "modelVersion",
+              "datasetVersion"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_evaluation_results_model_dataset` ON `${TABLE_NAME}` (`modelVersion`, `datasetVersion`)"
+          }
+        ]
+      },
+      {
+        "tableName": "evaluation_runs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `runId` TEXT NOT NULL, `datasetVersion` TEXT, `modelVersion` TEXT, `evaluationMethodVersion` TEXT NOT NULL, `createdAt` TEXT NOT NULL, `configJson` TEXT NOT NULL, `reportJson` TEXT NOT NULL, `totalItems` INTEGER NOT NULL, `eligibleItems` INTEGER NOT NULL, `excludedItems` INTEGER NOT NULL, `description` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "runId",
+            "columnName": "runId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "datasetVersion",
+            "columnName": "datasetVersion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "modelVersion",
+            "columnName": "modelVersion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "evaluationMethodVersion",
+            "columnName": "evaluationMethodVersion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "configJson",
+            "columnName": "configJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reportJson",
+            "columnName": "reportJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalItems",
+            "columnName": "totalItems",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "eligibleItems",
+            "columnName": "eligibleItems",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "excludedItems",
+            "columnName": "excludedItems",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "idx_evaluation_runs_dataset",
+            "unique": false,
+            "columnNames": [
+              "datasetVersion"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_evaluation_runs_dataset` ON `${TABLE_NAME}` (`datasetVersion`)"
+          },
+          {
+            "name": "idx_evaluation_runs_model",
+            "unique": false,
+            "columnNames": [
+              "modelVersion"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_evaluation_runs_model` ON `${TABLE_NAME}` (`modelVersion`)"
+          },
+          {
+            "name": "idx_evaluation_runs_created",
+            "unique": false,
+            "columnNames": [
+              "createdAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_evaluation_runs_created` ON `${TABLE_NAME}` (`createdAt`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '27ba04e0d503c3b624decebbb97da431')"
+    ]
+  }
+}

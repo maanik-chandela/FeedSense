@@ -56,6 +56,27 @@ interface SessionDao {
         projectId: String
     ): ResearchSession?
 
+    /*
+     * Milestone 7T. All currently active sessions, used
+     * by the retention worker to never purge a session
+     * that is still capturing.
+     */
+    @Query("""
+        SELECT id FROM research_sessions
+        WHERE active = 1
+    """)
+    suspend fun getActiveSessionIds(): List<String>
+
+    /*
+     * Milestone 7T. Unbounded read for the JSON dataset
+     * export.
+     */
+    @Query("""
+        SELECT * FROM research_sessions
+        ORDER BY startedAt ASC
+    """)
+    suspend fun getAllSessions(): List<ResearchSession>
+
     @Query("""
         UPDATE research_sessions
         SET active = 0,
@@ -78,6 +99,32 @@ interface SessionDao {
         sessionId: String,
         startedAt: LocalDateTime
     )
+    @Query("""
+    SELECT * FROM research_sessions
+    WHERE id = :sessionId
+    LIMIT 1
+""")
+    suspend fun getSessionById(
+        sessionId: String
+    ): ResearchSession?
+
+    /*
+     * Milestone 7S. True when the session is still
+     * active. The capture service checks this before
+     * saving every frame so capture stops the moment a
+     * session ends (battery + correctness). Returns null
+     * when the session no longer exists.
+     */
+    @Query("""
+    SELECT active
+    FROM research_sessions
+    WHERE id = :sessionId
+    LIMIT 1
+""")
+    suspend fun isSessionActive(
+        sessionId: String
+    ): Boolean?
+
     @Query("""
     UPDATE research_sessions
     SET observationCount = observationCount + 1

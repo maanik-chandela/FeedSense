@@ -1,5 +1,6 @@
 package com.example.feedsense
 
+import com.example.feedsense.analysis.ConfidenceLevel
 import com.example.feedsense.analysis.InteractionDetector
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -110,6 +111,62 @@ class InteractionDetectorTest {
             detector.detect(
                 "Today is a wonderful day outside"
             )
+        )
+    }
+
+    @Test
+    fun detectWithEvidence_carriesConfidenceAndEvidence() {
+
+        val signals =
+            detector.detectWithEvidence(
+                "2.1M likes · 1,200 comments"
+            )
+
+        val like =
+            signals.first {
+                it.signal ==
+                        InteractionDetector.SIGNAL_LIKE
+            }
+
+        assertEquals(
+            ConfidenceLevel.HIGH,
+            like.confidence
+        )
+
+        assertTrue(like.evidence.isNotBlank())
+
+        assertTrue(
+            like.evidence.contains("like")
+        )
+
+        /*
+         * detect() keeps returning plain ids so older
+         * callers are unaffected.
+         */
+        assertEquals(
+            signals.map { it.signal },
+            detector.detect(
+                "2.1M likes · 1,200 comments"
+            )
+        )
+    }
+
+    @Test
+    fun playbackPlaying_signalIsLowConfidence() {
+
+        val signals =
+            detector.detectWithEvidence(
+                "Now playing your feed"
+            )
+
+        assertTrue(signals.isNotEmpty())
+
+        assertEquals(
+            ConfidenceLevel.LOW,
+            signals.first {
+                it.signal ==
+                        InteractionDetector.SIGNAL_PLAYING
+            }.confidence
         )
     }
 }

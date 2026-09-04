@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Eye outer shape -->
+    <path
+        android:pathData="M54,34 C38,34 24,50 24,54 C24,58 38,74 54,74 C70,74 84,58 84,54 C84,50 70,34 54,34 Z"
+        android:fillColor="#00BFA5"
+        android:fillAlpha="0.9" />
+
+    <!-- Eye inner circle -->
+    <path
+        android:pathData="M54,44 A10,10 0 1,1 54,64 A10,10 0 1,1 54,44 Z"
+        android:fillColor="#0D1117" />
+
+    <!-- Eye pupil -->
+    <path
+        android:pathData="M54,48 A6,6 0 1,1 54,60 A6,6 0 1,1 54,48 Z"
+        android:fillColor="#E6EDF3" />
+
+    <!-- Data lines -->
+    <path
+        android:pathData="M30,42 L42,42"
+        android:strokeWidth="2"
+        android:strokeColor="#64FFDA"
+        android:strokeAlpha="0.6" />
+    <path
+        android:pathData="M66,42 L78,42"
+        android:strokeWidth="2"
+        android:strokeColor="#64FFDA"
+        android:strokeAlpha="0.6" />
+    <path
+        android:pathData="M30,66 L42,66"
+        android:strokeWidth="2"
+        android:strokeColor="#64FFDA"
+        android:strokeAlpha="0.6" />
+    <path
+        android:pathData="M66,66 L78,66"
+        android:strokeWidth="2"
+        android:strokeColor="#64FFDA"
+        android:strokeAlpha="0.6" />
+
+    <!-- Data dots -->
+    <path
+        android:pathData="M30,42 A1.5,1.5 0 1,1 30,42.01 Z"
+        android:fillColor="#64FFDA"
+        android:fillAlpha="0.8" />
+    <path
+        android:pathData="M78,42 A1.5,1.5 0 1,1 78,42.01 Z"
+        android:fillColor="#64FFDA"
+        android:fillAlpha="0.8" />
+    <path
+        android:pathData="M30,66 A1.5,1.5 0 1,1 30,66.01 Z"
+        android:fillColor="#64FFDA"
+        android:fillAlpha="0.8" />
+    <path
+        android:pathData="M78,66 A1.5,1.5 0 1,1 78,66.01 Z"
+        android:fillColor="#64FFDA"
+        android:fillAlpha="0.8" />
+
+</vector>

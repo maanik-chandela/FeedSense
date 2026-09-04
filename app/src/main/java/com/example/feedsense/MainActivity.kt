@@ -11,11 +11,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.feedsense.capture.ScreenCaptureService
+import com.example.feedsense.di.ModelPerformanceViewModelFactory
+import com.example.feedsense.di.AnnotationViewModelFactory
 import com.example.feedsense.di.ProjectViewModelFactory
 import com.example.feedsense.di.ReviewViewModelFactory
 import com.example.feedsense.di.SessionViewModelFactory
 import com.example.feedsense.navigation.AppNavigation
 import com.example.feedsense.ui.theme.FeedSenseTheme
+import com.example.feedsense.viewmodel.AnnotationViewModel
+import com.example.feedsense.viewmodel.ModelPerformanceViewModel
 import com.example.feedsense.viewmodel.ProjectViewModel
 import com.example.feedsense.viewmodel.ReviewViewModel
 import com.example.feedsense.viewmodel.SessionViewModel
@@ -111,7 +115,24 @@ class MainActivity : ComponentActivity() {
                         factory =
                             ReviewViewModelFactory(
                                 app.referenceRepository,
-                                app.sessionRepository
+                                app.sessionRepository,
+                                app.modelFeedbackRepository
+                            )
+                    )
+
+                val modelPerformanceViewModel: ModelPerformanceViewModel =
+                    viewModel(
+                        factory =
+                            ModelPerformanceViewModelFactory(
+                                app.modelPerformanceRepository
+                            )
+                    )
+
+                val annotationViewModel: AnnotationViewModel =
+                    viewModel(
+                        factory =
+                            AnnotationViewModelFactory(
+                                app.annotationRepository
                             )
                     )
 
@@ -124,6 +145,12 @@ class MainActivity : ComponentActivity() {
 
                     reviewViewModel =
                         reviewViewModel,
+
+                    modelPerformanceViewModel =
+                        modelPerformanceViewModel,
+
+                    annotationViewModel =
+                        annotationViewModel,
 
                     onStartScreenCapture = { sessionId ->
 

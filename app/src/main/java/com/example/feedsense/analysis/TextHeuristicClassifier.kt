@@ -23,7 +23,8 @@ data class ClassificationResult(
     val confidence: Double?,
     val ambiguityScore: Double?,
     val topic: String? = null,
-    val tone: String? = null
+    val tone: String? = null,
+    val reason: String? = null
 )
 
 // --------------------------------
@@ -123,14 +124,41 @@ class TextHeuristicClassifier {
         val tone =
             toneOf(normalized)
 
+        val reason =
+            buildReason(
+                ranked,
+                totalHits
+            )
+
         return ClassificationResult(
             primaryCategory = primary,
             secondaryCategories = secondaryCategories,
             confidence = confidence,
             ambiguityScore = ambiguityScore,
             topic = topic,
-            tone = tone
+            tone = tone,
+            reason = reason
         )
+    }
+
+    /*
+     * Human/audit-readable evidence for the decision.
+     *
+     * e.g. "hits: sports=3, comedy=1" or "no_text".
+     */
+    private fun buildReason(
+        ranked: List<Pair<String, Int>>,
+        totalHits: Int
+    ): String {
+
+        val hits =
+            ranked.joinToString(
+                separator = ", "
+            ) { (category, count) ->
+                "$category=$count"
+            }
+
+        return "hits: $hits (total $totalHits)"
     }
 
     // ========================================
@@ -203,7 +231,8 @@ class TextHeuristicClassifier {
             confidence = null,
             ambiguityScore = null,
             topic = null,
-            tone = null
+            tone = null,
+            reason = "no_text"
         )
     }
 
@@ -236,60 +265,33 @@ class TextHeuristicClassifier {
         const val TONE_GAMING =
             "GAMING"
 
+        /*
+         * Canonical tone vocabulary (SINGLE source of truth
+         * for the annotation taxonomy).
+         */
+        fun TONE_VALUES(): List<String> =
+            listOf(
+                TONE_EDUCATIONAL,
+                TONE_COMEDIC,
+                TONE_INSPIRATIONAL,
+                TONE_NEWS,
+                TONE_MUSICAL,
+                TONE_ENTERTAINMENT,
+                TONE_GAMING
+            )
+
         // --------------------------------
         // CATEGORY KEYWORDS
         // --------------------------------
+        //
+        // Milestone 7D: sourced from CategoryCatalog so
+        // the category list stays data-driven and can
+        // evolve without touching this classifier.
+        // Categories can also be added later from labeled
+        // reference data.
 
         val CATEGORY_KEYWORDS: Map<String, List<String>> =
-            mapOf(
-                "sports" to listOf(
-                    "cricket", "football", "goal", "ipl", "match",
-                    "score", "player", "highlight", "six", "wicket",
-                    "sports", "team", "tournament", "stadium"
-                ),
-                "comedy" to listOf(
-                    "funny", "laugh", "meme", "prank", "comedy",
-                    "joke", "roast", "skit", "hilarious", "fun"
-                ),
-                "motivation" to listOf(
-                    "motivation", "success", "mindset", "discipline",
-                    "never give up", "hustle", "inspiration",
-                    "hard work", "dream", "self improvement"
-                ),
-                "education" to listOf(
-                    "learn", "study", "science", "history", "facts",
-                    "tutorial", "explain", "lesson", "knowledge",
-                    "math", "physics", "chemistry", "education"
-                ),
-                "news" to listOf(
-                    "news", "breaking", "live", "update", "headline",
-                    "alert", "report", "election", "government"
-                ),
-                "music" to listOf(
-                    "song", "music", "lyrics", "album", "artist",
-                    "remix", "concert", "singer", "track", "audio"
-                ),
-                "gaming" to listOf(
-                    "game", "gaming", "gameplay", "level", "player",
-                    "minecraft", "pubg", "fortnite", "gta", "rank"
-                ),
-                "fitness" to listOf(
-                    "workout", "fitness", "gym", "exercise", "yoga",
-                    "diet", "muscle", "weight loss", "protein", "training"
-                ),
-                "technology" to listOf(
-                    "tech", "phone", "android", "iphone", "ai",
-                    "gadget", "review", "laptop", "software", "robot"
-                ),
-                "fashion" to listOf(
-                    "fashion", "style", "outfit", "ootd", "trend",
-                    "brand", "clothes", "look", "styling"
-                ),
-                "food" to listOf(
-                    "recipe", "food", "cooking", "tasty", "restaurant",
-                    "ingredient", "kitchen", "biryani", "dessert", "chef"
-                )
-            )
+            CategoryCatalog.keywordMap
 
         // --------------------------------
         // TOPIC KEYWORDS (7D-B)
@@ -459,6 +461,36 @@ class TextHeuristicClassifier {
                     "shopping" to listOf(
                         "shopping", "haul", "brand", "discount",
                         "sale"
+                    )
+                ),
+                "finance" to mapOf(
+                    "stocks" to listOf(
+                        "stock", "nifty", "sensex", "share",
+                        "trading", "market"
+                    ),
+                    "investing" to listOf(
+                        "invest", "mutual fund", "sip", "portfolio",
+                        "wealth"
+                    ),
+                    "crypto" to listOf(
+                        "crypto", "bitcoin", "ethereum", "blockchain"
+                    ),
+                    "personal finance" to listOf(
+                        "budget", "savings", "tax", "loan",
+                        "income", "expense"
+                    )
+                ),
+                "lifestyle" to mapOf(
+                    "daily routine" to listOf(
+                        "daily routine", "morning routine",
+                        "day in my life", "productivity"
+                    ),
+                    "vlogs" to listOf(
+                        "vlog", "travel vlog", "home tour"
+                    ),
+                    "self care" to listOf(
+                        "self care", "minimalist", "wellness",
+                        "work from home"
                     )
                 )
             )

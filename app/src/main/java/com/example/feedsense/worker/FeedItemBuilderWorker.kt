@@ -33,27 +33,43 @@ class FeedItemBuilderWorker(
 
     override suspend fun doWork(): Result {
 
-        return try {
+        val sessionIds =
+            sessionRepository
+                .getSessionsWithAnalyzedFrames()
 
-            val sessionIds =
-                sessionRepository
-                    .getSessionsWithAnalyzedFrames()
+        var hadFailure = false
 
-            for (sessionId in sessionIds) {
+        for (sessionId in sessionIds) {
+
+            try {
 
                 sessionRepository
                     .rebuildFeedItemsForSession(
                         sessionId
                     )
+
+            } catch (exception: Exception) {
+
+                /*
+                 * Isolate failures per session:
+                 *
+                 * - One broken session must not prevent
+                 *   the others from being built.
+                 * - A permanent failure is reported with
+                 *   Result.failure() instead of retry() so
+                 *   the unique work slot is released and
+                 *   future triggers can run again.
+                 */
+                exception.printStackTrace()
+
+                hadFailure = true
             }
+        }
 
+        return if (hadFailure) {
+            Result.failure()
+        } else {
             Result.success()
-
-        } catch (exception: Exception) {
-
-            exception.printStackTrace()
-
-            Result.retry()
         }
     }
 }

@@ -4,17 +4,32 @@ import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,29 +39,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.feedsense.analysis.TextHeuristicClassifier
+import com.example.feedsense.analysis.CategoryCatalog
+import com.example.feedsense.model.FeedItem
 import com.example.feedsense.model.LabeledReference
+import com.example.feedsense.ui.components.AIStatusIndicator
+import com.example.feedsense.ui.components.ConfidenceBadge
+import com.example.feedsense.ui.components.EmptyState
+import com.example.feedsense.ui.components.FeedSenseCard
+import com.example.feedsense.ui.components.InteractionTag
+import com.example.feedsense.ui.components.MetricCard
+import com.example.feedsense.ui.components.PlatformChip
+import com.example.feedsense.ui.components.SectionHeader
 import com.example.feedsense.viewmodel.ReviewViewModel
 import java.io.File
 import kotlinx.coroutines.flow.collectLatest
 
-// --------------------------------
-// REVIEW SCREEN
-// --------------------------------
-//
-// Milestone 7B.
-//
-// Human review of frames the local pipeline could
-// not confidently classify.
-//
-// Each card shows the captured frame and the local
-// AI prediction. The reviewer picks the best
-// category. That answer becomes validated
-// reference/training data.
-//
-
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ReviewScreen(
     reviewViewModel: ReviewViewModel,
@@ -54,370 +66,364 @@ fun ReviewScreen(
 ) {
 
     var pendingReviews by remember {
-        mutableStateOf<List<LabeledReference>>(
-            emptyList()
-        )
+        mutableStateOf<List<LabeledReference>>(emptyList())
     }
+    var validatedCount by remember { mutableIntStateOf(0) }
+    var agreementCount by remember { mutableIntStateOf(0) }
 
-    var validatedCount by remember {
-        mutableIntStateOf(0)
-    }
-
-    var agreementCount by remember {
-        mutableIntStateOf(0)
+    LaunchedEffect(Unit) {
+        reviewViewModel.getPendingReviews()
+            .collectLatest { pendingReviews = it }
     }
 
     LaunchedEffect(Unit) {
-
-        reviewViewModel
-            .getPendingReviews()
-            .collectLatest {
-                pendingReviews = it
-            }
+        reviewViewModel.getValidatedCount { validatedCount = it }
+        reviewViewModel.getValidatedAgreementCount { agreementCount = it }
     }
 
-    LaunchedEffect(Unit) {
-
-        reviewViewModel.getValidatedCount {
-            validatedCount = it
-        }
-
-        reviewViewModel.getValidatedAgreementCount {
-            agreementCount = it
-        }
+    val agreementPercent = if (validatedCount > 0) {
+        agreementCount * 100 / validatedCount
+    } else {
+        0
     }
 
-    val agreementPercent =
-        if (validatedCount > 0) {
-            agreementCount * 100 / validatedCount
-        } else {
-            0
-        }
-
-    LazyColumn(
-        modifier =
-            Modifier
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        LazyColumn(
+            modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-
-        verticalArrangement =
-            Arrangement.spacedBy(12.dp)
-    ) {
-
-        // --------------------------------
-        // HEADER
-        // --------------------------------
-
-        item {
-
-            Text(
-                text = "← Review",
-                style =
-                    MaterialTheme.typography
-                        .titleMedium
-            )
-
-            Spacer(
-                modifier =
-                    Modifier.height(12.dp)
-            )
-
-            Text(
-                text = "Unclassified Frames",
-                style =
-                    MaterialTheme.typography
-                        .headlineMedium
-            )
-
-            Spacer(
-                modifier =
-                    Modifier.height(8.dp)
-            )
-
-            Text(
-                text =
-                    "Frames the local AI could not " +
-                            "confidently classify.",
-                style =
-                    MaterialTheme.typography
-                        .bodyMedium
-            )
-
-            Spacer(
-                modifier =
-                    Modifier.height(12.dp)
-            )
-
-            Text(
-                text =
-                    "Validated: $validatedCount",
-                style =
-                    MaterialTheme.typography
-                        .bodyMedium
-            )
-
-            Text(
-                text =
-                    "Agreed with AI: $agreementCount " +
-                            "($agreementPercent%)",
-                style =
-                    MaterialTheme.typography
-                        .bodyMedium
-            )
-
-            Spacer(
-                modifier =
-                    Modifier.height(8.dp)
-            )
-
-            HorizontalDivider()
-        }
-
-        if (pendingReviews.isEmpty()) {
-
-            item {
-
-                Text(
-                    text =
-                        "No frames waiting for review.",
-                    style =
-                        MaterialTheme.typography
-                            .bodyMedium
-                )
-
-                Spacer(
-                    modifier =
-                        Modifier.height(16.dp)
-                )
-
-                OutlinedButton(
-                    onClick = onBack,
-
-                    modifier =
-                        Modifier.fillMaxWidth()
-                ) {
-
-                    Text(
-                        text = "Back"
-                    )
-                }
-            }
-
-        } else {
-
-            items(
-                items = pendingReviews,
-                key = {
-                    "review_${it.id}"
-                }
-            ) { reference ->
-
-                ReviewCard(
-                    reference = reference,
-                    onLabel = { label ->
-
-                        reviewViewModel.submitLabel(
-                            referenceId = reference.id,
-                            label = label
-                        )
-                    },
-                    onReject = {
-
-                        reviewViewModel.reject(
-                            reference.id
-                        )
-                    }
-                )
-            }
-        }
-    }
-}
-
-// ========================================
-// REVIEW CARD
-// ========================================
-
-@Composable
-private fun ReviewCard(
-    reference: LabeledReference,
-    onLabel: (String) -> Unit,
-    onReject: () -> Unit
-) {
-
-    val file =
-        File(
-            reference.filePath
-        )
-
-    val categoryCandidates =
-        remember(reference) {
-
-            buildList {
-
-                reference.candidateCategories.forEach {
-                    if (!contains(it)) {
-                        add(it)
-                    }
-                }
-
-                // Fall back to the full category list
-                // when the AI produced no prediction.
-                if (isEmpty()) {
-
-                    TextHeuristicClassifier
-                        .CATEGORY_KEYWORDS
-                        .keys
-                        .forEach {
-                            add(it)
-                        }
-                }
-            }
-        }
-
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-    ) {
-
-        if (file.exists()) {
-
-            val bitmap =
-                remember(
-                    reference.filePath
-                ) {
-
-                    BitmapFactory.decodeFile(
-                        reference.filePath
-                    )
-                }
-
-            if (bitmap != null) {
-
-                Image(
-                    bitmap =
-                        bitmap.asImageBitmap(),
-
-                    contentDescription =
-                        "Frame awaiting review",
-
-                    modifier =
-                        Modifier.fillMaxWidth()
-                )
-            }
-        }
-
-        Spacer(
-            modifier =
-                Modifier.height(8.dp)
-        )
-
-        Text(
-            text =
-                "AI Prediction: " +
-                        (reference.aiCategory
-                            ?: "none"),
-
-            style =
-                MaterialTheme.typography
-                    .titleSmall
-        )
-
-        reference.aiConfidence?.let { confidence ->
-
-            Spacer(
-                modifier =
-                    Modifier.height(2.dp)
-            )
-
-            Text(
-                text =
-                    "Confidence: " +
-                            "%.0f%%".format(
-                                confidence * 100.0
-                            ),
-
-                style =
-                    MaterialTheme.typography
-                        .bodySmall
-            )
-        }
-
-        reference.modelVersion?.let { modelVersion ->
-
-            Spacer(
-                modifier =
-                    Modifier.height(2.dp)
-            )
-
-            Text(
-                text =
-                    "Model: $modelVersion",
-
-                style =
-                    MaterialTheme.typography
-                        .bodySmall
-            )
-        }
-
-        Spacer(
-            modifier =
-                Modifier.height(8.dp)
-        )
-
-        Text(
-            text =
-                "What category best describes this content?",
-
-            style =
-                MaterialTheme.typography
-                    .bodyMedium
-        )
-
-        Spacer(
-            modifier =
-                Modifier.height(8.dp)
-        )
-
-        categoryCandidates.forEach { category ->
-
-            Button(
-                onClick = {
-                    onLabel(category)
-                },
-
-                modifier =
-                    Modifier.fillMaxWidth()
-            ) {
-
-                Text(
-                    text = category
-                )
-            }
-
-            Spacer(
-                modifier =
-                    Modifier.height(6.dp)
-            )
-        }
-
-        OutlinedButton(
-            onClick = onReject,
-
-            modifier =
-                Modifier.fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-            Text(
-                text = "Reject (not classifiable)"
-            )
-        }
+            // --------------------------------
+            // HEADER
+            // --------------------------------
 
-        HorizontalDivider(
-            modifier =
-                Modifier.padding(
-                    top = 12.dp
+            item {
+                Spacer(modifier = Modifier.height(48.dp))
+
+                IconButton(onClick = onBack) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Review Center",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.SemiBold
                 )
-        )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "Content the local AI was not sure about. Your corrections teach the local model.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    MetricCard(
+                        label = "Pending",
+                        value = "${pendingReviews.size}",
+                        modifier = Modifier.weight(1f),
+                        valueColor = MaterialTheme.colorScheme.secondary
+                    )
+                    MetricCard(
+                        label = "Validated",
+                        value = "$validatedCount",
+                        modifier = Modifier.weight(1f)
+                    )
+                    MetricCard(
+                        label = "AI Agreement",
+                        value = "$agreementPercent%",
+                        modifier = Modifier.weight(1f),
+                        valueColor = com.example.feedsense.ui.theme.ConfidenceHigh
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            if (pendingReviews.isEmpty()) {
+                item {
+                    FeedSenseCard {
+                        EmptyState(
+                            icon = Icons.Default.CheckCircle,
+                            title = "All caught up!",
+                            subtitle = "No content waiting for review."
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = onBack,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Back")
+                    }
+                }
+            } else {
+
+                items(pendingReviews, key = { "review_${it.id}" }) { reference ->
+                    ReviewCardWithContext(
+                        reference = reference,
+                        reviewViewModel = reviewViewModel
+                    )
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
     }
 }
+
+// --------------------------------
+// REVIEW CARD (WITH FEED ITEM CONTEXT)
+// --------------------------------
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ReviewCardWithContext(
+    reference: LabeledReference,
+    reviewViewModel: ReviewViewModel
+) {
+
+    var item by remember { mutableStateOf<FeedItem?>(null) }
+
+    LaunchedEffect(reference.id) {
+        reference.feedItemId?.let { feedItemId ->
+            reviewViewModel.getItemById(feedItemId = feedItemId) { item = it }
+        }
+    }
+
+    val file = File(reference.filePath)
+
+    val categoryCandidates = remember(reference) {
+        buildList {
+            reference.candidateCategories.forEach {
+                if (!contains(it)) add(it)
+            }
+            if (isEmpty()) {
+                CategoryCatalog.keys.forEach { add(it) }
+            }
+        }
+    }
+
+    var topic by remember(reference.id) { mutableStateOf(reference.topic ?: "") }
+    var tone by remember(reference.id) { mutableStateOf(reference.tone ?: "") }
+
+    FeedSenseCard(elevated = true) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            // Frame image
+            if (file.exists()) {
+                val bitmap = remember(reference.filePath) {
+                    BitmapFactory.decodeFile(reference.filePath)
+                }
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Frame awaiting review",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                    )
+                }
+            }
+
+            // AI prediction header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Psychology,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = reference.aiCategory ?: "Unclassified",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                reference.aiConfidence?.let { ConfidenceBadge(confidence = it) }
+            }
+
+            // Metadata chips
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                reference.modelVersion?.let {
+                    PlatformChip(platform = "Model: $it")
+                }
+                reference.platform?.takeIf { it.isNotBlank() }?.let {
+                    PlatformChip(platform = it)
+                }
+                item?.let { feedItem ->
+                    PlatformChip(platform = "${feedItem.durationSeconds}s")
+                    feedItem.interactionSignals.takeIf { it.isNotEmpty() }?.let { signals ->
+                        signals.forEach { InteractionTag(signal = it) }
+                    }
+                }
+            }
+
+            // AI reasoning
+            reference.aiReason?.takeIf { it.isNotBlank() }?.let { reason ->
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = "Why the AI thinks this",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = reason,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+
+            // Topic / tone corrections
+            Text(
+                text = "Topic (optional correction)",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            OutlinedTextField(
+                value = topic,
+                onValueChange = { topic = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("e.g. cooking tutorial") },
+                shape = RoundedCornerShape(10.dp),
+                textStyle = MaterialTheme.typography.bodyMedium
+            )
+
+            Text(
+                text = "Tone (optional correction)",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            OutlinedTextField(
+                value = tone,
+                onValueChange = { tone = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("e.g. humorous") },
+                shape = RoundedCornerShape(10.dp),
+                textStyle = MaterialTheme.typography.bodyMedium
+            )
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+
+            // Category selection
+            Text(
+                text = "What category best describes this?",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                categoryCandidates.forEach { category ->
+                    Button(
+                        onClick = {
+                            reviewViewModel.submitLabel(
+                                referenceId = reference.id,
+                                label = category,
+                                correctedTopic = topic,
+                                correctedTone = tone
+                            )
+                        },
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text(text = category, style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+
+                Button(
+                    onClick = {
+                        reviewViewModel.submitLabel(
+                            referenceId = reference.id,
+                            label = CATEGORY_MIXED,
+                            correctedTopic = topic,
+                            correctedTone = tone
+                        )
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary
+                    ),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Mixed", style = MaterialTheme.typography.labelLarge)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Action buttons
+            OutlinedButton(
+                onClick = { reviewViewModel.confirmAi(reference.id) },
+                enabled = reference.aiCategory != null,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text("AI was correct")
+            }
+
+            OutlinedButton(
+                onClick = { reviewViewModel.reject(reference.id) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text("Reject (not classifiable)")
+            }
+
+            OutlinedButton(
+                onClick = { reviewViewModel.skip(reference.id) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text("Skip review")
+            }
+        }
+    }
+}
+
+private const val CATEGORY_MIXED = "mixed"

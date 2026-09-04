@@ -1,0 +1,813 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 18,
+    "identityHash": "89e9a2dbf1d5c1f205279e54736916f2",
+    "entities": [
+      {
+        "tableName": "research_projects",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `researchQuestion` TEXT NOT NULL, `hypothesis` TEXT NOT NULL, `platform` TEXT NOT NULL, `owner` TEXT NOT NULL, `createdAt` TEXT NOT NULL, `updatedAt` TEXT NOT NULL, `sessionCount` INTEGER NOT NULL, `feedItemCount` INTEGER NOT NULL, `archived` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "researchQuestion",
+            "columnName": "researchQuestion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hypothesis",
+            "columnName": "hypothesis",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "platform",
+            "columnName": "platform",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "owner",
+            "columnName": "owner",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionCount",
+            "columnName": "sessionCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "feedItemCount",
+            "columnName": "feedItemCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "archived",
+            "columnName": "archived",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "research_sessions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `projectId` TEXT NOT NULL, `title` TEXT NOT NULL, `startedAt` TEXT NOT NULL, `endedAt` TEXT, `observationCount` INTEGER NOT NULL, `notes` TEXT NOT NULL, `active` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "projectId",
+            "columnName": "projectId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startedAt",
+            "columnName": "startedAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endedAt",
+            "columnName": "endedAt",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "observationCount",
+            "columnName": "observationCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "active",
+            "columnName": "active",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "research_observations",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `text` TEXT NOT NULL, `createdAt` TEXT NOT NULL, `source` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "text",
+            "columnName": "text",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "captured_frames",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `filePath` TEXT NOT NULL, `capturedAt` TEXT NOT NULL, `analysisStatus` TEXT NOT NULL, `analysisResult` TEXT, `analyzedAt` TEXT, `frameFingerprint` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filePath",
+            "columnName": "filePath",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "capturedAt",
+            "columnName": "capturedAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "analysisStatus",
+            "columnName": "analysisStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "analysisResult",
+            "columnName": "analysisResult",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "analyzedAt",
+            "columnName": "analyzedAt",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "frameFingerprint",
+            "columnName": "frameFingerprint",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "labeled_references",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `frameId` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `filePath` TEXT NOT NULL, `feedItemId` TEXT, `aiCategory` TEXT, `aiConfidence` REAL, `aiSource` TEXT NOT NULL, `modelVersion` TEXT, `candidateCategories` TEXT NOT NULL, `platform` TEXT, `topic` TEXT, `tone` TEXT, `visibleText` TEXT, `aiReason` TEXT, `interactionSignals` TEXT NOT NULL, `frameFingerprint` TEXT, `labelSource` TEXT NOT NULL, `validationStatus` TEXT NOT NULL, `validatedLabel` TEXT, `agreement` INTEGER, `createdAt` TEXT NOT NULL, `reviewedAt` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frameId",
+            "columnName": "frameId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filePath",
+            "columnName": "filePath",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "feedItemId",
+            "columnName": "feedItemId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "aiCategory",
+            "columnName": "aiCategory",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "aiConfidence",
+            "columnName": "aiConfidence",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "aiSource",
+            "columnName": "aiSource",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelVersion",
+            "columnName": "modelVersion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "candidateCategories",
+            "columnName": "candidateCategories",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "platform",
+            "columnName": "platform",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "topic",
+            "columnName": "topic",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "tone",
+            "columnName": "tone",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "visibleText",
+            "columnName": "visibleText",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "aiReason",
+            "columnName": "aiReason",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "interactionSignals",
+            "columnName": "interactionSignals",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frameFingerprint",
+            "columnName": "frameFingerprint",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "labelSource",
+            "columnName": "labelSource",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "validationStatus",
+            "columnName": "validationStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "validatedLabel",
+            "columnName": "validatedLabel",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "agreement",
+            "columnName": "agreement",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reviewedAt",
+            "columnName": "reviewedAt",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "feed_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `startTime` TEXT NOT NULL, `endTime` TEXT, `durationSeconds` INTEGER NOT NULL, `category` TEXT, `confidence` REAL, `topic` TEXT, `tone` TEXT, `contentType` TEXT NOT NULL, `skipped` INTEGER NOT NULL, `representativeFramePath` TEXT NOT NULL, `frameCount` INTEGER NOT NULL, `interactionSignals` TEXT NOT NULL, `modelVersion` TEXT, `frameFingerprint` TEXT, `needsReview` INTEGER NOT NULL, `candidateCategories` TEXT NOT NULL, `classificationReason` TEXT, `updatedAt` TEXT NOT NULL, `contentTransitions` TEXT NOT NULL, `interactionEvidence` TEXT NOT NULL, `secondaryCategory` TEXT, `secondaryCategories` TEXT NOT NULL, `mixedContent` INTEGER NOT NULL, `pausedDurationSeconds` INTEGER NOT NULL, `activeWatchDurationSeconds` INTEGER NOT NULL, `uncertaintyLevel` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startTime",
+            "columnName": "startTime",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endTime",
+            "columnName": "endTime",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "durationSeconds",
+            "columnName": "durationSeconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "confidence",
+            "columnName": "confidence",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "topic",
+            "columnName": "topic",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "tone",
+            "columnName": "tone",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "contentType",
+            "columnName": "contentType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "skipped",
+            "columnName": "skipped",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "representativeFramePath",
+            "columnName": "representativeFramePath",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frameCount",
+            "columnName": "frameCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "interactionSignals",
+            "columnName": "interactionSignals",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelVersion",
+            "columnName": "modelVersion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "frameFingerprint",
+            "columnName": "frameFingerprint",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "needsReview",
+            "columnName": "needsReview",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "candidateCategories",
+            "columnName": "candidateCategories",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "classificationReason",
+            "columnName": "classificationReason",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contentTransitions",
+            "columnName": "contentTransitions",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "interactionEvidence",
+            "columnName": "interactionEvidence",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "secondaryCategory",
+            "columnName": "secondaryCategory",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "secondaryCategories",
+            "columnName": "secondaryCategories",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mixedContent",
+            "columnName": "mixedContent",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pausedDurationSeconds",
+            "columnName": "pausedDurationSeconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeWatchDurationSeconds",
+            "columnName": "activeWatchDurationSeconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uncertaintyLevel",
+            "columnName": "uncertaintyLevel",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "model_feedback",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `frameId` TEXT, `feedItemId` TEXT, `sessionId` TEXT NOT NULL, `platform` TEXT, `visibleText` TEXT, `interactionSignals` TEXT NOT NULL, `originalCategory` TEXT, `originalConfidence` REAL, `originalTopic` TEXT, `originalTone` TEXT, `modelVersion` TEXT, `correctedCategory` TEXT, `correctedTopic` TEXT, `correctedTone` TEXT, `correctionSource` TEXT NOT NULL, `confidenceAfterCorrection` REAL, `categoryAgreement` INTEGER NOT NULL, `topicAgreement` INTEGER, `toneAgreement` INTEGER, `createdAt` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frameId",
+            "columnName": "frameId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "feedItemId",
+            "columnName": "feedItemId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "platform",
+            "columnName": "platform",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "visibleText",
+            "columnName": "visibleText",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "interactionSignals",
+            "columnName": "interactionSignals",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "originalCategory",
+            "columnName": "originalCategory",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "originalConfidence",
+            "columnName": "originalConfidence",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "originalTopic",
+            "columnName": "originalTopic",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "originalTone",
+            "columnName": "originalTone",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "modelVersion",
+            "columnName": "modelVersion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "correctedCategory",
+            "columnName": "correctedCategory",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "correctedTopic",
+            "columnName": "correctedTopic",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "correctedTone",
+            "columnName": "correctedTone",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "correctionSource",
+            "columnName": "correctionSource",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "confidenceAfterCorrection",
+            "columnName": "confidenceAfterCorrection",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "categoryAgreement",
+            "columnName": "categoryAgreement",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "topicAgreement",
+            "columnName": "topicAgreement",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "toneAgreement",
+            "columnName": "toneAgreement",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "cloud_usage_records",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT, `frameId` TEXT, `feedItemId` TEXT, `filePath` TEXT, `requestedAt` TEXT NOT NULL, `requestType` TEXT NOT NULL, `estimatedCostRupees` REAL NOT NULL, `allowed` INTEGER NOT NULL, `reason` TEXT NOT NULL, `modelVersion` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "frameId",
+            "columnName": "frameId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "feedItemId",
+            "columnName": "feedItemId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "filePath",
+            "columnName": "filePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "requestedAt",
+            "columnName": "requestedAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requestType",
+            "columnName": "requestType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "estimatedCostRupees",
+            "columnName": "estimatedCostRupees",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "allowed",
+            "columnName": "allowed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reason",
+            "columnName": "reason",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelVersion",
+            "columnName": "modelVersion",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "cloud_usage_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `monthKey` TEXT NOT NULL, `dayKey` TEXT NOT NULL, `monthlyEstimatedRupees` REAL NOT NULL, `dailyEstimatedRupees` REAL NOT NULL, `requestCount` INTEGER NOT NULL, `lastUpdated` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "monthKey",
+            "columnName": "monthKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dayKey",
+            "columnName": "dayKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "monthlyEstimatedRupees",
+            "columnName": "monthlyEstimatedRupees",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dailyEstimatedRupees",
+            "columnName": "dailyEstimatedRupees",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requestCount",
+            "columnName": "requestCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "lastUpdated",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '89e9a2dbf1d5c1f205279e54736916f2')"
+    ]
+  }
+}

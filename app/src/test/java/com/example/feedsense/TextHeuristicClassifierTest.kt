@@ -117,4 +117,65 @@ class TextHeuristicClassifierTest {
             result.topic
         )
     }
+
+    @Test
+    fun financeText_classifiesCategory() {
+
+        val result =
+            classifier.classify(
+                "Invest in mutual funds and sip, nifty hits record"
+            )
+
+        assertEquals(
+            "finance",
+            result.primaryCategory
+        )
+        assertEquals(
+            "investing",
+            result.topic
+        )
+    }
+
+    @Test
+    fun lifestyleText_classifiesCategory() {
+
+        val result =
+            classifier.classify(
+                "My morning routine and daily productivity vlog"
+            )
+
+        assertEquals(
+            "lifestyle",
+            result.primaryCategory
+        )
+        assertEquals(
+            "daily routine",
+            result.topic
+        )
+    }
+
+    @Test
+    fun classifiedText_includesReason() {
+
+        val result =
+            classifier.classify(
+                "Cricket ipl score: batsman hits a six, wicket falls"
+            )
+
+        assertNotNull(result.reason)
+        assertTrue(result.reason!!.contains("hits:"))
+        assertTrue(result.reason!!.contains("sports="))
+    }
+
+    @Test
+    fun blankText_reasonIsNoText() {
+
+        val result =
+            classifier.classify(null)
+
+        assertEquals(
+            "no_text",
+            result.reason
+        )
+    }
 }

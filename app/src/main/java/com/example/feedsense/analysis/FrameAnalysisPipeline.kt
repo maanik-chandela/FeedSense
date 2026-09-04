@@ -1,4 +1,7 @@
 package com.example.feedsense.analysis
+
+import com.example.feedsense.model.CloudUsageRecord
+import com.example.feedsense.repository.CloudUsageRepository
 import java.io.File
 
 // --------------------------------
@@ -29,7 +32,14 @@ class FrameAnalysisPipeline(
     private val cloudAnalyzer: CloudFrameAnalyzer =
         UnconfiguredCloudAnalyzer(),
     private val confidenceGate: ConfidenceGate =
-        ConfidenceGate()
+        ConfidenceGate(),
+    /*
+     * Milestone 7Q. When set, every cloud request is
+     * gated and recorded by the budget manager. When
+     * null (the default) the pipeline stays strictly
+     * local-only and never consults the cloud at all.
+     */
+    private val cloudUsageManager: CloudUsageRepository? = null
 ) : FrameAnalyzer {
 
     override suspend fun analyze(
@@ -63,11 +73,33 @@ class FrameAnalysisPipeline(
                     needsReview = false
                 )
 
+            // --------------------------------
+            // MEDIUM CONFIDENCE (7D)
+            // --------------------------------
+            //
+            // The local result is not strong enough to
+            // fully trust, but it is not so weak that it
+            // must be held out of feed items. The content
+            // is kept and flagged as uncertain; the feed
+            // item builder queues it for review.
+            //
+            // No cloud call: medium confidence stays on
+            // the local, budget-friendly path.
+            //
+            AnalysisDisposition.MEDIUM_CONFIDENCE ->
+                localResult.copy(
+                    disposition =
+                        disposition.name,
+                    needsReview = false,
+                    uncertain = true
+                )
+
             AnalysisDisposition.NEEDS_REVIEW ->
                 localResult.copy(
                     status = STATUS_NEEDS_REVIEW,
                     disposition = disposition.name,
-                    needsReview = true
+                    needsReview = true,
+                    uncertain = true
                 )
 
             // AMBIGUOUS and NEEDS_CLOUD both try
@@ -75,10 +107,39 @@ class FrameAnalysisPipeline(
             AnalysisDisposition.AMBIGUOUS,
             AnalysisDisposition.NEEDS_CLOUD -> {
 
+                /*
+                 * Milestone 7Q. Every cloud request is
+                 * gated BEFORE it is made. A blocked or
+                 * unaffordable request behaves exactly
+                 * like an unreachable cloud: the local
+                 * result is kept and the item goes to the
+                 * human review queue. The attempt itself
+                 * is always recorded for the audit trail.
+                 */
+                val budgetDecision =
+                    cloudUsageManager
+                        ?.authorizeAndRecord(
+                            sessionId = null,
+                            frameId = null,
+                            feedItemId = null,
+                            filePath = file.absolutePath,
+                            requestType = CloudUsageRecord
+                                .REQUEST_TYPE_CLASSIFICATION,
+                            modelVersion =
+                                localResult.modelVersion
+                        )
+
+                val cloudAllowed =
+                    budgetDecision?.allowed ?: false
+
                 val cloudResult =
-                    runCatching {
-                        cloudAnalyzer.analyze(file)
-                    }.getOrNull()
+                    if (cloudAllowed) {
+                        runCatching {
+                            cloudAnalyzer.analyze(file)
+                        }.getOrNull()
+                    } else {
+                        null
+                    }
 
                 if (cloudResult != null) {
 
@@ -87,20 +148,46 @@ class FrameAnalysisPipeline(
                         needsReview = false
                     )
 
+                } else if (
+                    disposition ==
+                    AnalysisDisposition.AMBIGUOUS
+                ) {
+
+                    // --------------------------------
+                    // AMBIGUOUS, NO CLOUD (7D)
+                    // --------------------------------
+                    //
+                    // Ambiguous content must NOT be
+                    // forced into a single category. Keep
+                    // the local prediction as context,
+                    // mark it uncertain, and let the
+                    // reviewer decide with candidates.
+                    //
+                    localResult.copy(
+                        disposition =
+                            disposition.name,
+                        needsReview = false,
+                        uncertain = true
+                    )
+
                 } else {
 
-                    // No cloud available.
+                    // --------------------------------
+                    // VERY LOW CONFIDENCE, NO CLOUD
+                    // --------------------------------
                     //
                     // Keep the local prediction so the
                     // review UI has context, but mark
                     // the frame as needing review.
+                    //
                     localResult.copy(
                         status = STATUS_NEEDS_REVIEW,
                         disposition =
                             AnalysisDisposition
                                 .NEEDS_REVIEW
                                 .name,
-                        needsReview = true
+                        needsReview = true,
+                        uncertain = true
                     )
                 }
             }

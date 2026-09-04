@@ -1,14 +1,27 @@
 package com.example.feedsense.ui.theme.projects
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.feedsense.model.ResearchProject
+import com.example.feedsense.ui.components.FeedSenseCard
+import com.example.feedsense.ui.components.PlatformChip
 
 @Composable
 fun ProjectCard(
@@ -16,42 +29,61 @@ fun ProjectCard(
     onClick: () -> Unit
 ) {
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                onClick()
-            },
-        elevation = CardDefaults.cardElevation(4.dp)
+    FeedSenseCard(
+        onClick = onClick
     ) {
-
         Column(
-            modifier = Modifier.padding(18.dp)
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Folder,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = project.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
 
-            Text(
-                project.title,
-                style = MaterialTheme.typography.titleLarge
-            )
+            if (project.description.isNotEmpty()) {
+                Text(
+                    text = project.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                PlatformChip(platform = project.platform)
+            }
 
-            Text(
-                project.platform
-            )
+            Spacer(modifier = Modifier.height(4.dp))
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                "Sessions : ${project.sessionCount}"
-            )
-
-            Text(
-                "Feed Items : ${project.feedItemCount}"
-            )
-
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "${project.sessionCount} sessions",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "${project.feedItemCount} items",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
-
     }
-
 }

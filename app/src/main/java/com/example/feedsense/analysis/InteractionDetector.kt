@@ -27,11 +27,64 @@ package com.example.feedsense.analysis
 // - playback_playing     : "Now playing", "Replay", "Playing"
 //
 
+// --------------------------------
+// INTERACTION SIGNAL
+// --------------------------------
+//
+// Milestone 7F (Part 3).
+//
+// One detected interaction/playback indicator with its
+// confidence level and the raw visual evidence that
+// produced it. The evidence is the matched UI text, so
+// every signal stays auditable and honest.
+//
+// Confidence reflects how unambiguous the UI text is:
+//
+// - HIGH   for explicit affordances ("Paused",
+//          "2,345 likes", "Save", ...)
+// - LOW    for weaker phrases ("playing", "watch now")
+//
+
+data class InteractionSignal(
+    val signal: String,
+    val confidence: ConfidenceLevel,
+    val evidence: String
+) {
+
+    /*
+     * Stable, pipe-separated encoding used in the frame
+     * analysis result JSON and the learning dataset:
+     *
+     *   "like_indicator|HIGH|matched: likes"
+     */
+    fun toEvidenceString(): String {
+        return listOf(
+            signal,
+            confidence.name,
+            evidence
+        ).joinToString(EVIDENCE_SEPARATOR)
+    }
+
+    companion object {
+
+        const val EVIDENCE_SEPARATOR = "|"
+    }
+}
+
 class InteractionDetector {
 
     fun detect(
         text: String?
     ): List<String> {
+
+        return detectWithEvidence(text).map {
+            it.signal
+        }
+    }
+
+    fun detectWithEvidence(
+        text: String?
+    ): List<InteractionSignal> {
 
         if (text.isNullOrBlank()) {
             return emptyList()
@@ -42,44 +95,86 @@ class InteractionDetector {
 
         return buildList {
 
-            if (matchesAny(normalized, LIKE_PATTERNS)) {
-                add(SIGNAL_LIKE)
+            firstMatch(normalized, LIKE_PATTERNS)?.let {
+                add(
+                    InteractionSignal(
+                        signal = SIGNAL_LIKE,
+                        confidence = ConfidenceLevel.HIGH,
+                        evidence = "matched: $it"
+                    )
+                )
             }
 
-            if (matchesAny(normalized, COMMENT_PATTERNS)) {
-                add(SIGNAL_COMMENT)
+            firstMatch(normalized, COMMENT_PATTERNS)?.let {
+                add(
+                    InteractionSignal(
+                        signal = SIGNAL_COMMENT,
+                        confidence = ConfidenceLevel.HIGH,
+                        evidence = "matched: $it"
+                    )
+                )
             }
 
-            if (matchesAny(normalized, SHARE_PATTERNS)) {
-                add(SIGNAL_SHARE)
+            firstMatch(normalized, SHARE_PATTERNS)?.let {
+                add(
+                    InteractionSignal(
+                        signal = SIGNAL_SHARE,
+                        confidence = ConfidenceLevel.HIGH,
+                        evidence = "matched: $it"
+                    )
+                )
             }
 
-            if (matchesAny(normalized, SAVE_PATTERNS)) {
-                add(SIGNAL_SAVE)
+            firstMatch(normalized, SAVE_PATTERNS)?.let {
+                add(
+                    InteractionSignal(
+                        signal = SIGNAL_SAVE,
+                        confidence = ConfidenceLevel.HIGH,
+                        evidence = "matched: $it"
+                    )
+                )
             }
 
-            if (matchesAny(normalized, FOLLOW_PATTERNS)) {
-                add(SIGNAL_FOLLOW)
+            firstMatch(normalized, FOLLOW_PATTERNS)?.let {
+                add(
+                    InteractionSignal(
+                        signal = SIGNAL_FOLLOW,
+                        confidence = ConfidenceLevel.HIGH,
+                        evidence = "matched: $it"
+                    )
+                )
             }
 
-            if (matchesAny(normalized, PAUSE_PATTERNS)) {
-                add(SIGNAL_PAUSE)
+            firstMatch(normalized, PAUSE_PATTERNS)?.let {
+                add(
+                    InteractionSignal(
+                        signal = SIGNAL_PAUSE,
+                        confidence = ConfidenceLevel.HIGH,
+                        evidence = "matched: $it"
+                    )
+                )
             }
 
-            if (matchesAny(normalized, PLAYING_PATTERNS)) {
-                add(SIGNAL_PLAYING)
+            firstMatch(normalized, PLAYING_PATTERNS)?.let {
+                add(
+                    InteractionSignal(
+                        signal = SIGNAL_PLAYING,
+                        confidence = ConfidenceLevel.LOW,
+                        evidence = "matched: $it"
+                    )
+                )
             }
         }
     }
 
-    private fun matchesAny(
+    private fun firstMatch(
         normalized: String,
         patterns: List<String>
-    ): Boolean {
+    ): String? {
 
-        return patterns.any {
+        return patterns.firstOrNull {
             normalized.contains(it)
-        }
+        }?.trim()
     }
 
     companion object {

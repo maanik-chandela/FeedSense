@@ -11,6 +11,9 @@ class ProjectRepository(
     val allProjects: Flow<List<ResearchProject>> =
         projectDao.getAllProjects()
 
+    val allProjectsWithCounts: Flow<List<ResearchProject>> =
+        projectDao.getAllProjectsWithCounts()
+
     suspend fun insert(project: ResearchProject) {
         projectDao.insert(project)
     }

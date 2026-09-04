@@ -63,11 +63,38 @@ interface CaptureDao {
         sessionId: String
     ): List<CapturedFrame>
 
+    /*
+     * Milestone 7D.
+     *
+     * Frames that participate in FeedItem building.
+     *
+     * Previously only ANALYZED frames were used, which
+     * silently dropped NEEDS_REVIEW / REVIEWED content
+     * - a very short Reel with a weak classification
+     * would never become a FeedItem.
+     *
+     * Uncertain frames are now included so nothing
+     * disappears; they simply produce items flagged for
+     * review.
+     */
+    @Query(
+        """
+    SELECT *
+    FROM captured_frames
+    WHERE sessionId = :sessionId
+    AND analysisStatus IN ('ANALYZED', 'NEEDS_REVIEW', 'REVIEWED')
+    ORDER BY capturedAt ASC
+    """
+    )
+    suspend fun getFramesForItemBuilding(
+        sessionId: String
+    ): List<CapturedFrame>
+
     @Query(
         """
     SELECT DISTINCT sessionId
     FROM captured_frames
-    WHERE analysisStatus = 'ANALYZED'
+    WHERE analysisStatus IN ('ANALYZED', 'NEEDS_REVIEW', 'REVIEWED')
     """
     )
     suspend fun getSessionsWithAnalyzedFrames(): List<String>
@@ -129,14 +156,16 @@ interface CaptureDao {
     SET
         analysisStatus = 'ANALYZED',
         analysisResult = :result,
-        analyzedAt = :analyzedAt
+        analyzedAt = :analyzedAt,
+        frameFingerprint = :fingerprint
     WHERE id = :frameId
     """
     )
     suspend fun markAnalyzed(
         frameId: String,
         result: String,
-        analyzedAt: LocalDateTime
+        analyzedAt: LocalDateTime,
+        fingerprint: String? = null
     )
 
 // --------------------------------
@@ -170,15 +199,70 @@ interface CaptureDao {
     SET
         analysisStatus = 'NEEDS_REVIEW',
         analysisResult = :result,
-        analyzedAt = :analyzedAt
+        analyzedAt = :analyzedAt,
+        frameFingerprint = :fingerprint
     WHERE id = :frameId
     """
     )
     suspend fun markNeedsReview(
         frameId: String,
         result: String,
-        analyzedAt: LocalDateTime
+        analyzedAt: LocalDateTime,
+        fingerprint: String? = null
     )
+
+// --------------------------------
+// MILESTONE 8B-3: FRAME FILTERED
+// --------------------------------
+//
+// A frame that was perceptually similar to a recently
+// retained frame and was not force-kept. The frame file
+// is preserved for research completeness but the
+// expensive analysis pipeline is skipped.
+//
+
+    @Query(
+        """
+    UPDATE captured_frames
+    SET
+        analysisStatus = 'FILTERED',
+        analysisResult = :result,
+        analyzedAt = :analyzedAt,
+        frameFingerprint = :fingerprint
+    WHERE id = :frameId
+    """
+    )
+    suspend fun markFiltered(
+        frameId: String,
+        result: String,
+        analyzedAt: LocalDateTime,
+        fingerprint: String? = null
+    )
+
+// --------------------------------
+// MILESTONE 7S: FRAME DEDUP
+// --------------------------------
+//
+// Same content, same session -> analyzed once. Returns
+// an already-analyzed frame with the same perceptual
+// fingerprint so the worker can reuse its classification
+// instead of running the whole pipeline again.
+//
+
+    @Query(
+        """
+    SELECT *
+    FROM captured_frames
+    WHERE sessionId = :sessionId
+    AND analysisStatus IN ('ANALYZED', 'NEEDS_REVIEW')
+    AND frameFingerprint = :fingerprint
+    LIMIT 1
+    """
+    )
+    suspend fun getAnalyzedFrameByFingerprint(
+        sessionId: String,
+        fingerprint: String
+    ): CapturedFrame?
 
 // --------------------------------
 // RESET PROCESSING FRAMES
@@ -226,6 +310,111 @@ interface CaptureDao {
     """
     )
     suspend fun deleteAnalyzedFramesForSession(
+        sessionId: String
+    )
+
+// --------------------------------
+// REVIEW QUEUE COUNT (7G PART 5)
+// --------------------------------
+
+    @Query(
+        """
+    SELECT COUNT(*)
+    FROM captured_frames
+    WHERE analysisStatus = 'NEEDS_REVIEW'
+    """
+    )
+    suspend fun getNeedsReviewFrameCount(): Int
+
+// --------------------------------
+// MILESTONE 7T: RETENTION
+// --------------------------------
+//
+// The retention worker operates on these queries. Only
+// raw frame statuses (PENDING/PROCESSING/FAILED/ANALYZED)
+// are ever bulk-deleted; the review queue and the
+// labeled reference / feedback dataset survive.
+
+    @Query(
+        """
+    SELECT
+        sessionId,
+        MAX(capturedAt) AS latestCapturedAt,
+        COUNT(*) AS frameCount
+    FROM captured_frames
+    GROUP BY sessionId
+    """
+    )
+    suspend fun getSessionFrameStats():
+            List<com.example.feedsense.model.SessionFrameStats>
+
+    @Query(
+        """
+    SELECT filePath
+    FROM captured_frames
+    WHERE sessionId = :sessionId
+    AND analysisStatus IN ('PENDING', 'PROCESSING', 'FAILED', 'ANALYZED', 'FILTERED')
+    ORDER BY capturedAt ASC
+    LIMIT :limit
+    """
+    )
+    suspend fun getDeletableFramePathsForSession(
+        sessionId: String,
+        limit: Int
+    ): List<String>
+
+    @Query(
+        """
+    SELECT filePath
+    FROM captured_frames
+    WHERE sessionId = :sessionId
+    """
+    )
+    suspend fun getFramePathsForSession(
+        sessionId: String
+    ): List<String>
+
+    @Query(
+        """
+    DELETE FROM captured_frames
+    WHERE sessionId = :sessionId
+    AND id IN (
+        SELECT id
+        FROM captured_frames
+        WHERE sessionId = :sessionId
+        AND analysisStatus IN ('PENDING', 'PROCESSING', 'FAILED', 'ANALYZED', 'FILTERED')
+        ORDER BY capturedAt ASC
+        LIMIT :limit
+    )
+    """
+    )
+    suspend fun deleteDeletableFramesForSession(
+        sessionId: String,
+        limit: Int
+    )
+
+    @Query(
+        """
+    SELECT *
+    FROM captured_frames
+    WHERE sessionId = :sessionId
+    AND capturedAt BETWEEN :startTime AND :endTime
+    ORDER BY capturedAt ASC
+    """
+    )
+    fun getFramesForSessionInWindow(
+        sessionId: String,
+        startTime: LocalDateTime,
+        endTime: LocalDateTime
+    ): Flow<List<CapturedFrame>>
+
+    @Query(
+        """
+    DELETE FROM captured_frames
+    WHERE sessionId = :sessionId
+    """
+    )
+    suspend fun deleteFramesForSession(
         sessionId: String
     )
 }

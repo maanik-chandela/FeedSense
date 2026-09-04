@@ -23,6 +23,8 @@ import android.os.Looper
 import androidx.core.app.NotificationCompat
 import com.example.feedsense.FeedSenseApplication
 import com.example.feedsense.R
+import com.example.feedsense.analysis.dedup.AdaptiveFrameSampler
+import com.example.feedsense.analysis.dedup.DeduplicationConfig
 import com.example.feedsense.model.CapturedFrame
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -149,6 +151,22 @@ class ScreenCaptureService : Service() {
      */
     private var lastFrameEvaluationTime =
         0L
+
+    /*
+     * Milestone 8B-3. Bounded adaptive frame sampler.
+     * Replaces the fixed FRAME_INTERVAL_MS with an
+     * adaptive interval based on visual change.
+     */
+    private val adaptiveSampler =
+        AdaptiveFrameSampler()
+
+    /*
+     * Pixels of the last saved bitmap, used for
+     * computing change magnitude for the adaptive
+     * sampler.
+     */
+    private var previousSavedPixels:
+            IntArray? = null
 
     private val handler =
         Handler(
@@ -303,6 +321,8 @@ class ScreenCaptureService : Service() {
 
         lastFrameEvaluationTime = 0L
 
+        adaptiveSampler.reset()
+
         previousSavedBitmap?.let {
 
             if (!it.isRecycled) {
@@ -311,6 +331,8 @@ class ScreenCaptureService : Service() {
         }
 
         previousSavedBitmap = null
+
+        previousSavedPixels = null
 
         try {
 
@@ -468,6 +490,50 @@ class ScreenCaptureService : Service() {
             try {
 
                 /*
+                 * Milestone 8B-3. Adaptive sampling:
+                 * compute visual change magnitude and
+                 * let the sampler decide whether to
+                 * evaluate this frame.
+                 */
+                val now =
+                    System.currentTimeMillis()
+
+                val changeMagnitude =
+                    if (
+                        previousSavedPixels !=
+                        null &&
+                        previousSavedBitmap !=
+                        null &&
+                        !previousSavedBitmap!!
+                            .isRecycled
+                    ) {
+
+                    adaptiveSampler
+                        .computeChangeMagnitude(
+                            previousPixels =
+                                previousSavedPixels!!,
+                            currentPixels =
+                                bitmapToPixels(bitmap),
+                            width = bitmap.width,
+                            height = bitmap.height
+                        )
+
+                } else {
+                    1f
+                }
+
+                if (
+                    !adaptiveSampler.shouldSample(
+                        currentTimestampMs = now,
+                        visualChangeMagnitude =
+                            changeMagnitude
+                    )
+                ) {
+
+                    return
+                }
+
+                /*
                  * First frame is always saved.
                  *
                  * Every following frame is compared
@@ -513,6 +579,18 @@ class ScreenCaptureService : Service() {
                             Bitmap.Config.ARGB_8888,
                             false
                         )
+
+                    /*
+                     * Milestone 8B-3. Store pixel data
+                     * for adaptive change magnitude
+                     * computation.
+                     */
+                    previousSavedPixels?.let {
+                        // old pixels are discarded
+                    }
+
+                    previousSavedPixels =
+                        bitmapToPixels(bitmap)
                 }
 
             } finally {
@@ -613,6 +691,32 @@ class ScreenCaptureService : Service() {
     // ========================================
     // DUPLICATE FRAME DETECTION
     // ========================================
+
+    /*
+     * Milestone 8B-3. Extract pixel data from a bitmap
+     * for adaptive change magnitude computation.
+     */
+    private fun bitmapToPixels(
+        bitmap: Bitmap
+    ): IntArray {
+
+        val width = bitmap.width
+        val height = bitmap.height
+        val pixels =
+            IntArray(width * height)
+
+        bitmap.getPixels(
+            pixels,
+            0,
+            width,
+            0,
+            0,
+            width,
+            height
+        )
+
+        return pixels
+    }
 
     private fun hasMeaningfulChange(
         previous: Bitmap,
@@ -830,10 +934,35 @@ class ScreenCaptureService : Service() {
 
             /*
              * Store metadata in Room.
+             *
+             * Milestone 7S: the session-active guard is
+             * the safety net for the stop command sent by
+             * SessionRepository.endSession. If the user
+             * ended the session while this frame was in
+             * flight, the frame is discarded, the file
+             * removed and capture stops - no data from an
+             * ended session is persisted.
              */
             serviceScope.launch {
 
                 try {
+
+                    val sessionActive =
+                        sessionRepository
+                            .isSessionActive(
+                                sessionId
+                            )
+
+                    if (!sessionActive) {
+
+                        file.delete()
+
+                        frameCounter--
+
+                        stopCaptureService()
+
+                        return@launch
+                    }
 
                     sessionRepository
                         .insertCapturedFrame(
@@ -1006,6 +1135,8 @@ class ScreenCaptureService : Service() {
 
         previousSavedBitmap = null
 
+        previousSavedPixels = null
+
         /*
          * Reset state.
          */
@@ -1067,6 +1198,8 @@ class ScreenCaptureService : Service() {
         }
 
         previousSavedBitmap = null
+
+        previousSavedPixels = null
 
         currentSessionId = null
 

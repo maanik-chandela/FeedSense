@@ -1,6 +1,7 @@
 package com.example.feedsense.model
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 import java.util.UUID
@@ -32,7 +33,29 @@ import java.util.UUID
 // dataset can be evaluated per model over time.
 //
 
-@Entity(tableName = "labeled_references")
+/*
+ * Milestone 7T. Indexes cover the hot paths: the review
+ * queue (validationStatus), per-frame pending checks
+ * (frameId) and item-level reference assignment
+ * (sessionId + feedItemId).
+ */
+@Entity(
+    tableName = "labeled_references",
+    indices = [
+        Index(
+            name = "idx_labeled_references_status",
+            value = ["validationStatus"]
+        ),
+        Index(
+            name = "idx_labeled_references_frame",
+            value = ["frameId"]
+        ),
+        Index(
+            name = "idx_labeled_references_session_item",
+            value = ["sessionId", "feedItemId"]
+        )
+    ]
+)
 data class LabeledReference(
 
     @PrimaryKey
@@ -43,6 +66,16 @@ data class LabeledReference(
     val sessionId: String,
 
     val filePath: String,
+
+    /*
+     * Milestone 7D.
+     *
+     * When set, this reference was created at the
+     * FeedItem level (an uncertain content piece)
+     * rather than a single frame. Validating it
+     * corrects the FeedItem itself.
+     */
+    val feedItemId: String? = null,
 
     // --------------------------------
     // AI PREDICTION
@@ -65,6 +98,38 @@ data class LabeledReference(
     //
 
     val candidateCategories: List<String> = emptyList(),
+
+    // --------------------------------
+    // MILESTONE 7F (PARTS 7-8)
+    // --------------------------------
+    //
+    // Rich context preserved with every reference so
+    // the local dataset can later be searched by
+    // category, topic, platform, text or model version
+    // without re-analyzing the original frames.
+
+    val platform: String? = null,
+
+    val topic: String? = null,
+
+    val tone: String? = null,
+
+    val visibleText: String? = null,
+
+    val aiReason: String? = null,
+
+    val interactionSignals: List<String> = emptyList(),
+
+    /*
+     * Milestone 7G.
+     *
+     * The perceptual fingerprint of the frame (or the
+     * representative frame of the feed item) this
+     * reference came from. Lets the local retriever
+     * find visually similar previous examples without
+     * re-analyzing the original images.
+     */
+    val frameFingerprint: String? = null,
 
     // --------------------------------
     // LABEL / VALIDATION
@@ -93,6 +158,16 @@ data class LabeledReference(
 
         const val VALIDATION_REJECTED =
             "REJECTED"
+
+        /*
+         * Milestone 7K (Part 3). The reviewer chose
+         * "Skip review": the reference is removed from the
+         * active queue without becoming validated or
+         * rejected training data. TEXT constant only -
+         * no schema change.
+         */
+        const val VALIDATION_SKIPPED =
+            "SKIPPED"
 
         const val LABEL_SOURCE_HUMAN =
             "HUMAN"

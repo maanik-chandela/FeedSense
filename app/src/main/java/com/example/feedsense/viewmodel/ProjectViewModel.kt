@@ -20,6 +20,9 @@ class ProjectViewModel(
     val allProjects: Flow<List<ResearchProject>> =
         repository.allProjects
 
+    val allProjectsWithCounts: Flow<List<ResearchProject>> =
+        repository.allProjectsWithCounts
+
     var currentProject by mutableStateOf<ResearchProject?>(null)
         private set
 

@@ -50,4 +50,28 @@ interface ObservationDao {
     suspend fun deleteAutoForSession(
         sessionId: String
     )
+
+    /*
+     * Milestone 7T. Full wipe of a session's
+     * observations (manual + auto) used by the retention
+     * worker when purging a whole session.
+     */
+    @Query("""
+        DELETE FROM research_observations
+        WHERE sessionId = :sessionId
+    """)
+    suspend fun deleteAllForSession(
+        sessionId: String
+    )
+
+    /*
+     * Milestone 7T. Unbounded read for the JSON dataset
+     * export.
+     */
+    @Query("""
+        SELECT *
+        FROM research_observations
+        ORDER BY createdAt ASC
+    """)
+    suspend fun getAll(): List<ResearchObservation>
 }
