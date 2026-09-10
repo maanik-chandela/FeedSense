@@ -778,3 +778,747 @@ vs FUSION on identical frozen evaluation items. With no populated
 real corpus, accuracy conclusions are reported honestly as
 `INSUFFICIENT_REAL_DATA_FOR_ACCURACY_CONCLUSIONS`; the framework and
 its unit tests demonstrate the comparison path.
+
+---
+
+## 12. Production-Safe Evidence-Aware Evaluation Integration (8B-8)
+
+8B-8 creates a **production-safe comparison/integration layer** that
+allows the new evidence-aware system to operate on real FeedSense
+observations without modifying the baseline observation-generation
+path. The baseline AI result remains authoritative and is never
+silently replaced.
+
+### 12.1 Purpose and architecture
+
+The adapter takes an existing FeedItem and its available 8B-6
+evidence snapshot, runs the 8B-7 evidence-aware decision, and
+returns a structured, immutable comparison between:
+
+1. the existing baseline AI result, and
+2. the new evidence-aware result.
+
+```
+FeedItem (production, immutable)
+    │
+    ├──────────────────► baseline (read verbatim)
+    │
+    └──► EvidenceAwareProductionAdapter
+              │
+              ▼
+      ReadOnlyEvidenceAwareAdapter (8B-7)
+              │
+              ▼
+      ItemDecisionEngine (8B-7)
+              │
+              ▼
+  EvidenceAwareComparisonResult (8B-8)
+              │
+              ▼
+     DecisionEvaluationBridge (8B-7)
+              │
+              ▼
+          8A evaluation
+```
+
+### 12.2 Design constraints
+
+- **Read-only**: the FeedItem is never modified.
+- **No Room writes**: no entity is persisted.
+- **Baseline immutability**: no prediction, observation, session
+  state, or historical record is changed.
+- **Independent from SessionRepository**: `buildFeedItem()` is not
+  touched.
+- **Category schema frozen**: no categories renamed, merged,
+  deleted, or added.
+- **Deterministic**: same inputs → same result.
+- **Bounded batch**: explicit limits, no unbounded database scan.
+- **Privacy-preserving**: no raw screenshots, OCR text, captions,
+  messages, personal names, notification contents, private URLs,
+  or personal identifiers are exported.
+- **Fails safely**: adapter failures produce a safe
+  UNKNOWN/UNRESOLVED state without modifying production.
+
+### 12.3 Comparison states (`ComparisonState`)
+
+A controlled, deterministic enum classifying the relationship
+between the baseline and evidence-aware predictions:
+
+- **AGREEMENT**: both systems named the same primary category.
+- **CATEGORY_DISAGREEMENT**: both decided on different categories.
+- **BASELINE_UNKNOWN**: baseline had no usable category.
+- **EVIDENCE_AWARE_UNKNOWN**: evidence-aware abstained (UNKNOWN).
+- **BOTH_UNKNOWN**: neither system had a usable category.
+- **INSUFFICIENT_EVIDENCE**: evidence explicitly insufficient.
+- **REVIEW_REQUIRED**: evidence-aware identifies human review need.
+
+### 12.4 Difference reasons (`DifferenceReason`)
+
+A controlled taxonomy of structured reasons for disagreement:
+
+- `REPRESENTATIVE_FRAME_CONFLICT`
+- `TEMPORAL_CONTEXT_CHANGED_DECISION`
+- `OCR_CHANGED_DECISION`
+- `PLATFORM_EVIDENCE_CHANGED_DECISION`
+- `INTERACTION_EVIDENCE_CHANGED_DECISION`
+- `SEGMENTATION_DIFFERENCE`
+- `LOW_INFORMATION_EVIDENCE`
+- `SHORT_INTERACTION`
+- `CATEGORY_BOUNDARY`
+- `INSUFFICIENT_EVIDENCE`
+- `MODEL_DISAGREEMENT`
+- `UNKNOWN` (preferred over fabrication)
+
+Only reasons supported by actual evidence are included. `UNKNOWN`
+is always preferred over inventing an explanation.
+
+### 12.5 Evidence strength (`EvidenceStrength`)
+
+A controlled vocabulary for evidence quality, explicitly separate
+from AI confidence or prediction correctness:
+
+- **NONE**: no usable evidence.
+- **WEAK**: limited evidence, substantial risk.
+- **MODERATE**: adequate evidence with gaps.
+- **STRONG**: diverse, well-covered evidence.
+
+**Critical distinction**: evidence strength ≠ prediction correctness.
+STRONG evidence does NOT mean the prediction is correct. Only
+ground truth (8A layer) establishes correctness.
+
+### 12.6 Privacy guarantees
+
+The comparison model must not contain:
+
+- Raw screenshots or screenshot paths (when policy prohibits)
+- Raw OCR text payloads
+- Private captions or message contents
+- Personal names
+- Notification contents
+- Arbitrary screen text
+- Private URLs
+- Personal identifiers
+
+Only structured IDs, category labels, and controlled metadata are
+retained. IDs may be retained for traceability; the comparison
+points to evidence, not duplicates it.
+
+### 12.7 Versioning
+
+Every comparison carries explicit versions:
+
+- `adapterVersion`: the production adapter version
+  (`evidence-aware-production-adapter-v1`)
+- `baselineModelVersion`: the original classifier version
+- `evidenceAwareModelVersion`: the 8B-6 fusion version
+- `decisionVersion`: the 8B-7 decision layer version
+- `datasetVersion`: the evaluation dataset version (when available)
+- `diagnosticVersion`: root-cause diagnostic version (when available)
+
+### 12.8 Batch processing
+
+The adapter supports bounded batch comparison:
+
+- Explicit maximum (`MAX_BATCH_SIZE = 100`).
+- Deterministic ordering (input order preserved).
+- Limit is coerced to `[1, MAX_BATCH_SIZE]`.
+- No unbounded database scan.
+- No duplicate processing.
+- No mutation of baseline.
+
+### 12.9 Failure handling
+
+Possible failures and their handling:
+
+- FeedItem not found → safe UNKNOWN/UNRESOLVED state
+- Evidence unavailable → INSUFFICIENT_EVIDENCE
+- Invalid snapshot → safe UNKNOWN state
+- Missing representative frame → gracefully handled
+- Incompatible version → logged, safe failure
+- Malformed prediction → safe UNKNOWN state
+- 8B decision failure → safe UNKNOWN state
+
+Adapter failures never crash the session pipeline. A structured
+failure result is returned with `comparisonState` reflecting the
+safe default.
+
+### 12.10 8A bridge compatibility
+
+8B-8 uses the existing `DecisionEvaluationBridge` from 8B-7 rather
+than creating a second competing implementation:
+
+```
+EvidenceAwareComparisonResult
+    → DecisionEvaluationBridge.toAiPredictionRecord()
+        → 8A evaluation layer
+```
+
+The bridge converts an `ItemPredictionResult` into an immutable
+`AiPredictionRecord` with `source = AI_EVIDENCE_AWARE` so the 8A
+engine can compare baseline vs evidence-aware on identical items.
+
+### 12.11 Human review support
+
+When the baseline and evidence-aware result disagree, the comparison
+exposes structured information for the 8A annotation/evaluation
+workflow:
+
+- `REVIEW_REQUIRED` state
+- `humanReviewRecommended` flag
+- Detailed difference reasons
+- Evidence strength assessment
+
+The adapter marks `REVIEW_REQUIRED` but must NOT automatically mark
+the result as human-confirmed. Human adjudication remains
+authoritative via the existing 8A annotation workflow.
+
+### 12.12 Confidence ≠ accuracy
+
+The comparison layer clearly distinguishes:
+
+- AI confidence (classifier or evidence support score)
+- Evidence strength (quality of available evidence)
+- Prediction agreement (both systems said the same thing)
+- Ground-truth correctness (only 8A ground truth establishes this)
+
+`baselineConfidence = 0.92` does NOT mean `baselineAccuracy = 92%`.
+`evidenceStrength = STRONG` does NOT mean `predictionCorrect = TRUE`.
+Tests explicitly prevent accidental conflation.
+
+### 12.13 Determinism
+
+The same input produces the same logical result:
+
+- Same FeedItem + same evidence + same versions = same comparison
+- Deterministic ordering in batch operations
+- Timestamps do not invalidate comparison semantics
+- No nondeterministic fields in canonical comparison
+
+### 12.14 Database changes
+
+**No Room schema changes.** The 8B-8 adapter is a read-only
+derivation layer over existing data. Database version remains **26**.
+
+### 12.15 Future extensibility
+
+The adapter architecture allows future experiments:
+
+- Baseline AI vs Evidence-aware AI comparisons
+- Category accuracy, macro F1, per-category precision/recall
+- Calibration analysis
+- Disagreement rate measurement
+- Review rate tracking
+- Uncertainty rate analysis
+- Root-cause distribution studies
+- Representative-frame failure rate
+- Temporal-context benefit measurement
+- OCR/platform/interaction evidence contribution
+- Latency and compute cost analysis
+
+8B-8 itself does not invent these statistics; it provides the
+infrastructure to measure them.
+
+---
+
+## 13. Controlled Real-Data Experiment & Paired Evaluation Harness (8B-9)
+
+8B-9 builds a **controlled real-data experiment** layer on top of
+the 8B-8 comparative and 8A evaluation infrastructure. It lets
+FeedSense run bounded, auditable, baseline-vs-evidence-aware paired
+comparisons over a real observation population while keeping the
+authoritative baseline strictly unmodified and the experiment purely
+**observational / evaluative** - never training, never mutating a
+FeedItem, session, prediction, or evaluation record, never changing
+any production pipeline.
+
+### 13.1 Purpose and scope
+
+The harness answers the research question "does the evidence-aware
+path help or hurt relative to the authoritative baseline on real
+content?" through a **paired design**: the SAME ground truth is
+judged against BOTH the baseline and the evidence-aware prediction,
+so the comparison is apples-to-apples. It does not invent accuracy:
+it surfaces exactly how much real, eligible, non-leaked data exists,
+and refuses to claim a conclusion when that is insufficient.
+
+### 13.2 Real-data observability (no assumptions)
+
+The harness is strict about what counts as "real":
+
+- It consumes **real evaluation items**, **real immutable baseline
+  prediction snapshots**, and **real human ground truth** from the
+  8A layer.
+- It reuses the 8B-7 evidence-aware decision path to derive the
+  evidence-aware prediction for each real item.
+- When real paired data is absent or below the frozen sample-size
+  guard, the run reports `INSUFFICIENT_REAL_DATA` and explicitly
+  refuses to assert a comparative conclusion (`INSUFFICIENT_REAL_DATA_FOR_COMPARATIVE_CONCLUSIONS`).
+
+### 13.3 Baseline safety statement (see also 12.2)
+
+Every experiment carries an explicit **baseline safety statement**
+that is asserted by construction:
+
+- baseline prediction unmodified
+- FeedItems unmodified
+- sessions unmodified
+- predictions (baseline snapshots) unmodified
+- evaluation records unmodified
+- no production pipeline changes
+- observational/evaluative only
+
+The runner never writes to any table; every input consumed by the
+experiment is read-only. Tests assert `baselineSafety.safe == true`.
+
+### 13.4 Experiment definition and validation
+
+`ExperimentDefinition` is immutable and fully describes a run:
+experiment id/name/version, dataset mode, selection parameters,
+a bounded maximum, an optional annotator scope, the reused 8B-8
+comparison config, and version provenance (baseline / evidence-aware
+/ decision). Construction validates:
+- name non-blank and `maxItems >= 1`
+- date range ordering (`startDate <= endDate`)
+- mode-consistent selection (e.g. SESSION requires a sessionId)
+
+### 13.5 Dataset selection modes
+
+The population is chosen by one of five modes:
+- `SESSION` - all evaluated items of one research session
+- `ITEM_SET` - an explicit bounded set of item ids
+- `DATE_RANGE` - items enqueued within a time window
+- `EVALUATION_DATASET` - a frozen curated dataset cohort
+- `ALL_EVALUATED` - every item with a comparable ground truth
+
+### 13.6 Bounded execution
+
+Every run is explicitly bounded by `maxItems`. Selection applies a
+deterministic id-ordered cap and never performs an unbounded scan,
+mirroring the 8B-8 `MAX_BATCH_SIZE` discipline. Items dropped by the
+cap are counted (`excludedCapCount`), never silently discarded.
+
+### 13.7 Same-sample guarantee
+
+`DatasetSelection` guarantees SAME-SAMPLE semantics: each item is
+used exactly once with a single authoritative ground truth, and is
+judged once. Multiple records per item are reduced to the earliest
+comparable (non-`UNKNOWN`) record, optionally scoped to one
+annotator (pseudonymous `annotatorId`). This prevents double
+counting and keeps the paired contingency exact.
+
+### 13.8 Ground-truth eligibility
+
+Each observation is classified `ELIGIBLE_FOR_ACCURACY` (comparable
+definitive truth) or `EXCLUDED_FROM_ACCURACY` (e.g. `AMBIGUITY_UNKNOWN`).
+Eligibility is identical to the 8B-8 comparable-truth rule, so the
+accuracy denominator is consistent across layers. Excluded
+observations are still carried and reported (abstention / dataset
+quality) but never enter any accuracy denominator.
+
+### 13.9 Five-way paired outcome
+
+`EvidenceAwareOutcome` is the frozen, non-collapsing classification
+of each eligible observation:
+- `BOTH_CORRECT`
+- `BASELINE_ONLY_CORRECT` (evidence-aware regression)
+- `EVIDENCE_AWARE_ONLY_CORRECT` (evidence-aware improvement)
+- `BOTH_WRONG`
+- `INCOMPLETE` (at least one side abstained / unjudgeable)
+
+`INCOMPLETE` is kept separate from accuracy so abstention is never
+mistaken for accuracy. Mapping from the finer 8B-8 `ComparisonOutcome`
+is deterministic.
+
+### 13.10 Same truth, both systems (paired integrity)
+
+Both sides of each paired observation are judged against the SAME
+ground truth via the immutable 8B-8 `PairedPrediction`. The baseline
+record is consumed verbatim; the evidence-aware record is
+materialized by the read-only 8B-7 `DecisionEvaluationBridge`. Both
+verdicts use the SAME 8A `EvaluationRecord.fromComponents` rules - no
+double standard.
+
+### 13.11 Confusion matrices
+
+Class confusion (truth category x predicted primary category) is
+computed for BOTH systems over the SAME eligible pairs by reusing
+the 8B-8 `TransitionMatrices.classConfusion`, yielding a palpable
+"who confused what" comparison.
+
+### 13.12 Difference / coverage-transition matrix
+
+The `TransitionMatrices.coverageTransition` (CORRECT / WRONG /
+UNKNOWN per side) is reused as the experiment's difference matrix.
+The leading diagonal is "no change"; off-diagonal cells expose
+evidence-aware improvements and regressions explicitly.
+
+### 13.13 Per-category statistics
+
+Per-category precision / recall / F1 for both systems are computed
+by reusing the 8B-8 `ComparativeMetrics.perCategory` over the same
+eligible population, with the same explicit support guards
+(`INSUFFICIENT` rather than a manufactured number).
+
+### 13.14 McNemar-ready output
+
+The experiment exposes a **McNemar-ready** paired contingency -
+`baselineCorrect`, `evidenceAwareCorrect`, and the discordant counts
+`baselineOnlyCorrect` / `evidenceAwareOnlyCorrect` - computed by
+reusing the 8B-8 exact `PairedStats.mcnemar`. The exact binomial
+test and its sample-size guards match the comparative layer exactly,
+so no statistic is invented below the discordant-pair minimum.
+
+### 13.15 Real-data status (`INSUFFICIENT_REAL_DATA`)
+
+The run computes a strict real-data flag following the 8B-8
+effect-size guard: when eligible paired observations are below the
+frozen minimum, the status is `INSUFFICIENT_REAL_DATA` and the
+comparative report emits `INSUFFICIENT_REAL_DATA_FOR_COMPARATIVE_CONCLUSIONS`
+with an explicit note that the supplied numbers must NOT be read as
+a systemic claim.
+
+### 13.16 Dataset quality report
+
+`DatasetQualityReport` describes population composition and
+strength: eligible vs excluded counts, truth-ambiguity distribution,
+platform / content-type / duration distributions, and distinct feed
+items - counts and controlled metadata only.
+
+### 13.17 Leakage protection
+
+`LeakageGuard` checks the experiment population against a nominated
+training/validation dataset cohort
+(`ExperimentDefinition.trainingDatasetVersion`) and reports any
+overlapping item ids as `LEAKAGE DETECTED`. When no training cohort
+is nominated the check is explicitly reported as skipped (not
+silently assumed clean).
+
+### 13.18 Audit trail
+
+`ExperimentSnapshot` records every run: the definition, the exact
+selected population, version provenance, and an ordered list of
+immutable audit events.
+
+### 13.19 Idempotency
+
+Each snapshot carries a deterministic **SHA-256 idempotency
+signature** derived from the definition plus the exact selected
+population. Re-running the identical experiment on the identical
+population yields the identical signature, so duplicate or drifted
+runs are detectable.
+
+### 13.20 Privacy-safe export
+
+`ExperimentExporter` emits JSON (a full count/metadata summary plus
+the reused 8B-8 comparative body) and a per-observation CSV
+(evaluation item id, feed item id, eligibility, outcome). Only
+COUNTS, version metadata, structured outcome labels, and opaque
+traceable ids are exported. Raw content is NEVER written: no
+screenshots, OCR text, captions, messages, personal names,
+notification contents, private URLs, or personal identifiers
+(matching the 8B-8 privacy guarantees).
+
+### 13.21 Reuse of existing infrastructure (no duplication)
+
+The harness reuses, without duplication:
+- 8B-8 `PairedPrediction`, `PairedPredictionBuilder`,
+  `ComparativeEvaluator`, `ComparativeReport`,
+  `TransitionMatrices` (confusion + transition/difference matrices),
+  `ComparativeMetrics` (overall + per-category), `PairedStats`
+  (exact McNemar + effect size), `StratifiedComparison`,
+  `ErrorRootCauseComparison`
+- 8B-7 `DecisionEvaluationBridge` and the evidence-aware decision
+  path
+- 8A `EvaluationRecord` comparison rules and ground-truth semantics
+
+### 13.22 Read-only data sources
+
+`ExperimentDataSource` is a read-only abstraction; a default
+in-memory implementation supports tests and in-hand data, while
+`RoomExperimentDataSource` reuses the EXISTING `EvaluationDao` for
+items / prediction snapshots / ground truths. Evidence-aware
+decisions are supplied per run (they are derived on demand, not
+persisted).
+
+### 13.23 Configuration guards reused
+
+The 8B-8 `ComparativeConfig` sample-size guards
+(minimumMcNemarDiscordantPairs, minimumForEffectSize,
+minimumForConfidenceInterval, minimumStratumSupport) are reused
+verbatim; no guard is relaxed to manufacture a result.
+
+### 13.24 Determinism
+
+Same definition + same population + same versions + same decisions =
+same outcome, same confusion/difference matrices, same McNemar
+contingency, and same idempotency signature. Selection ordering is
+deterministic (id-ordered).
+
+### 13.25 Failure semantics
+
+Items gracefully excluded from pairing are surfaced with an explicit
+reason (no truth / no baseline / no evidence-aware decision) rather
+than assumed correct or silently dropped. A missing evidence-aware
+decision excludes the item from the evidence-aware side and counts
+it in the exclusion accounting - it is never assumed correct.
+
+### 13.26 No accuracy claims without real ground truth
+
+The harness never emits an accuracy number for an observation
+without a comparable real ground truth. All accuracy denominators
+derive from `ELIGIBLE_FOR_ACCURACY` observations only; every
+proportion is guarded and carries an explicit state.
+
+### 13.27 Database changes
+
+**No Room schema changes.** The experiment reads existing data
+through the existing `EvaluationDao` (no new queries, no new
+tables). Database version remains **26**. `SessionRepository`,
+`FeedItem`, and the production prediction path are not modified.
+
+### 13.28 Walkthrough of a run
+
+1. Build an immutable `ExperimentDefinition` (mode, bounds, scope,
+   versions).
+2. Read real items / baseline snapshots / ground truths through the
+   read-only data source.
+3. `DatasetSelection` applies the mode, the deterministic cap, and
+   the same-sample rule; assemble `PairedPrediction`s.
+4. `LeakageGuard` (optionally) checks against a training cohort.
+5. `DatasetQualityReport` describes the population.
+6. `ComparativeEvaluator` produces the reusable 8B-8 report
+   (metrics, matrices, per-category, stratification, root cause,
+   conclusion).
+7. `ExperimentAnalyzer` tallies the five-way outcome and computes
+   the McNemar-ready contingency + real-data status.
+8. `ExperimentSnapshot` records the audit trail and idempotency
+   signature; `ExperimentExporter` produces privacy-safe JSON/CSV.
+9. The `ExperimentSummary` is returned, with the real-data status
+   and baseline safety statement asserted.
+
+The harness is a complement to the 8B-9 statistical-robustness layer
+(which stresses these comparisons with bootstrap / sensitivity
+analyses); the two share the same paired design and the same
+guards.
+
+
+## 14. Privacy-safe evidence sanitization review (8B-10)
+
+Milestone 8B-10 adds the evidence-protection layer described in
+`docs/privacy.md`. For evaluation this means:
+
+- **What evidence reaches evaluation changes, not how it is
+  judged.** The evidence-aware pipelines (8B-6/7/8/9) still run the
+  same deterministic decision and paired-comparison logic; the
+  inputs they see are sanitized frames plus redacted OCR text.
+- **Baseline integrity holds.** `FeedItem`, `AiPredictionRecord`,
+  `GroundTruth`, the category taxonomy, and Room schema v26 are
+  unchanged. Baseline predictions are read verbatim.
+
+  `8B-10 does not modify FeedSense baseline predictions. Privacy
+  sanitization is an evidence-protection layer and does not alter
+  FeedItem semantics or the baseline AI.`
+
+- **Evaluation carries privacy metadata.** `ItemEvidenceSnapshot`
+  now carries a defaulted `PrivacyEvidenceMetadata (NONE)`, and
+  `EvidenceAwareProductionAdapter` surfaces `privacyPolicyVersion`,
+  `privacyStatusLabel`, `privacyEvidenceLossLabels`, plus
+  evidence-backed `PRIVACY_REDACTION_AFFECTED_DECISION` /
+  `EVIDENCE_LOST_DUE_TO_SANITIZATION` reasons. Legacy snapshot
+  construction (without the field) is source-compatible and yields
+  `NONE`.
+- **Honest validation language.** Sanitization behavior is
+  validated by on-device JVM unit tests (deterministic patterns and
+  a fake rasterizer) and the existing 8B-4 device rasterizer tests.
+  No fabricated detection rates or percentages are reported. A
+  measured detection rate may be added here only after a controlled
+  on-device population measurement.
+- **Privacy-safe measurement.** `PrivacyMetrics` records observed
+  counts only; the 8B-9 experiment harness exports privacy-safe
+  JSON. Raw OCR text and raw frame paths are never written to
+  evaluation exports under the default `SANITIZED_METADATA_ONLY`
+  policy.
+
+
+## 15. Perceptual frame deduplication review (8B-11)
+
+Milestone 8B-11 adds a standalone, research-grade visual-change
+layer (`analysis/efficiency/`) described in
+`docs/perceptual-deduplication.md`. For evaluation this means:
+
+- **Evaluation logic is untouched.** The deduplication layer is
+  not wired into `SessionRepository.buildFeedItem()`, the
+  evidence pipelines (8B-6/7/8/9), the baseline AI, the category
+  taxonomy, or Room schema v26. It is a forward future hook for a
+  8B-12 scheduling layer via `FrameSimilarityResult.forwards`.
+- **Baseline integrity holds.** `FeedItem`, `AiPredictionRecord`,
+  `GroundTruth`, the frozen category schema, and the database
+  schema are unchanged. Baseline predictions are read verbatim.
+
+  `8B-11 does not modify FeedSense baseline predictions. Perceptual
+  frame deduplication is an efficiency heuristic layer and does not
+  alter FeedItem semantics or the baseline AI.`
+
+- **Decision semantics are versioned and attributable.** Every
+  result carries the algorithm (`dHash-v1`/`pHash-v1`), the
+  distance function version (`hamming-v1`), the config version
+  (`dedup-v1`), the timestamp, and the sequence index. Any future
+  efficiency study can be attributed exactly.
+- **Decision vocabulary is controlled.** `FrameDecision`
+  (`DUPLICATE` / `SIMILAR` / `UNIQUE`) and `FrameEvaluationReason`
+  (`FIRST_FRAME` / `COMPARED` / `TIME_WINDOW_GATED` /
+  `FORCED_FORWARD` / `DISABLED_PASSTHROUGH`) form the only
+  vocabulary a consumer may rely on. `downstreamOnly = forwards`.
+- **Honest validation language.** Behaviour is validated on pure
+  JVM synthetic frames: determinism, threshold boundary
+  semantics, rolling-reference state machine, safety ceiling,
+  time gating, O(1) memory over 10,000 frames, and a controlled
+  engineering corpus (identical / resolution / brightness /
+  tiny-indicator / minor-motion / ad interstitial / inversion /
+  caption / different-reel) with an explicit ordering invariant.
+  The corpus is labelled NOT real-world accuracy; known
+  limitations (small-element suppression, luminance inversion)
+  are recorded as documented risks, not hidden.
+- **No fabricated efficiency claims.** `EfficiencyBenchmark`
+  reports measured hash timings as methodology only; tests assert
+  plumbing, not wall-clock numbers, to stay flake-free. Battery /
+  CPU improvement is NOT claimed — a controlled on-device
+  population measurement is required first.
+- **Privacy-safe persistence.** The layer retains only lossy,
+  non-reversible perceptual hashes plus counters/decisions; it
+  never writes raw frames, OCR text, or frame paths. This is
+  consistent with the 8B-10 privacy policy ordering (reference
+  hashes are research-safe).
+
+
+## 16. Adaptive frame sampling & inference scheduling review (8B-12)
+
+Milestone 8B-12 adds a standalone, research-grade scheduling
+layer (`analysis/scheduling/`) described in
+`docs/scheduling.md`. For evaluation this means:
+
+- **Evaluation logic is untouched.** The scheduling layer is not
+  wired into `SessionRepository.buildFeedItem()`, the evidence
+  pipelines (8B-6/7/8/9), the baseline AI, the category taxonomy,
+  the 8B-11 deduplication layer, or Room schema v26. It consumes
+  `FrameSimilarityResult` structurally and never hashes or inspects
+  pixels itself.
+- **Baseline integrity holds.** `FeedItem`, `AiPredictionRecord`,
+  `GroundTruth`, the frozen category schema, and the database
+  schema are unchanged. Baseline predictions are read verbatim.
+
+  `8B-12 does not modify FeedSense baseline predictions. Adaptive
+  frame sampling is an orchestration/efficiency layer only; it
+  changes which frames are analyzed in a future experiment, never
+  what a given analysis scores.`
+
+- **Decision semantics are versioned and attributable.** Every
+  `SamplingDecision` carries `algorithmVersion` and
+  `configVersion` (`sampling-v1`), the candidate/analysis index,
+  the pre-mutation elapsed time, the adaptive interval that
+  applied, and the passed-through 8B-11 evidence (distance,
+  decision, algorithm version). Any future scheduling study can be
+  attributed exactly.
+- **Decision vocabulary is controlled.** Actions are exactly
+  `ANALYZE` / `FORCE_ANALYZE` / `SKIP`; reasons are exactly the ten
+  documented values. There is no DEFER action — `SKIP` +
+  `MIN_INTERVAL` carries deferral semantics.
+- **The scheduler is purely reactive and memory-bounded.** State is
+  O(window) (last-analysis timestamp, counters, a bounded 8B-11
+  distance ring); `reset()` isolates sessions; all state access is
+  synchronized. `SamplingStats.samplingRatio` is a diagnostic
+  (analyzed/candidates), NOT accuracy and NOT a battery claim.
+- **Honest validation language.** Behaviour is validated on pure
+  deterministic sets with injected timestamps: interval boundary
+  semantics (inclusive min/max), pressure/roll-window behaviour,
+  transition/interaction precedence after the minimum gate,
+  fallback on negative timestamps, reset/session isolation,
+  determinism, bounded state, and property invariants §37.1-§37.5.
+  Sequences (A A A A B B C C, A B C D E, scroll-burst) were
+  hand-calibrated against the running implementation. The
+  `SamplingBenchmark` corpus is synthetic and asserts problem
+  *shape* (static < moving < rapid, ceiling coverage on static,
+  no forcing under rapid scroll); it is explicitly NOT real-world
+  accuracy.
+- **No fabricated efficiency claims.** No battery/CPU saving is
+  claimed; `samplingRatio` is reported as a diagnostic for the
+  planned on-device experiments A-D and hypotheses H1-H4 (§13 of
+  `docs/scheduling.md`), which remain future work pending wiring
+  into the capture pipeline.
+- **Privacy-safe.** The scheduling layer holds no pixels, no OCR
+  text, no raw frame paths; its only retained evidence is lossy,
+  non-reversible 8B-11 distances. This is consistent with the
+  8B-10 privacy policy ordering (sampling is a privacy
+  multiplier — fewer frames cross a model).
+- **Standalone verification status.** Full suite 1334 unit tests
+  green, 0 failures; `assembleDebug` builds clean. The same
+  pre-existing `ItemDecisionTest.test28_manyInputsRemainDeterministic`
+  time-straddle flake documented in §14.1/§15 remains (green in
+  clean full runs); 8B-12 added no new flaky tests.
+
+## 17. Model & runtime selection review (8B-15-1)
+
+Research-phase review record. This milestone does NOT change any evaluation
+data, dataset construction, or eligibility rules; it selects the on-device model
+architecture and runtime for the **experimental** ML path added by 8B-14 and
+records the evidence so the choice is attributable and reproducible.
+
+### 17.1 Scope
+
+- Decide, with graded evidence, which on-device architecture and runtime the
+  experimental ML path standardizes on. Nothing in this record modifies the
+  text-heuristic baseline (`local-v6.0`), `GroundTruth`, `AiPredictionRecord`,
+  evaluation tables, or annotations.
+
+### 17.2 Decision and rationale
+
+- **Runtime: LiteRT (TensorFlow Lite); Model: MobileNetV4-Conv-S (INT8);
+  fallback: EfficientNet-Lite.** Rationale and 20-criterion matrix:
+  `docs/ml-model-selection.md`; ADR: `docs/adrs/adr-0001-on-device-ml-runtime-and-model.md`.
+- Rejected/held: compact ViTs (rejected, no packaged Android artifact); ONNX
+  Runtime Mobile and ExecuTorch (conditional only, each with a stated trigger);
+  VLMs (Qwen2.5-VL, SmolVLM/SmolVLM2 — observed only, multimodal stage).
+
+### 17.3 Evidence discipline
+
+- Every claim carries an `EvidenceLevel` (FACT / MEASURED / DOCUMENTED_BY_SOURCE /
+  ENGINEERING_ESTIMATE / HYPOTHESIS / UNKNOWN / REQUIRES_EXPERIMENT). No
+  fabricated latency/accuracy numbers are emitted; unresolved figures are marked
+  `UNKNOWN` / `REQUIRES_EXPERIMENT` and listed in §17.4.
+
+### 17.4 Required experiments before promotion
+
+1. Later milestone (after the 8B-15-2 reproducibility-identity work): build the
+   TFLite classifier behind `OnDeviceModel`; measure latency/RAM/energy on
+   representative devices (MEASURED).
+2. Corpus experiment vs the baseline text heuristic on FeedSense categories with
+   real ground truth, incl. an image+OCR hybrid comparison.
+3. Verification gates: packaged weight licenses and SHA-256 checksums recorded
+   in the reproducibility contract; re-check ONNX Runtime mobile cadence and
+   EfficientNet-Lite license when the artifact is acquired.
+
+### 17.5 Reproducibility
+
+- `analysis/ml/selection/ResearchDecisionCatalog` pins catalog/ADR versions,
+  candidate ids, per-cell evidence and sources; `DecisionSerializer` output is
+  byte-stable (tests in
+  `app/src/test/java/com/example/feedsense/analysis/ml/selection/`). Full JVM
+  suite green; `assembleDebug` clean.
+
+### 17.6 Model artifact & reproducibility identity (8B-15-2)
+
+Follow-up milestone: establishes the **deterministic, auditable identity** of the
+8B-15-1 configuration without touching the evaluation layer or the baseline.
+
+- **New standalone package** `analysis/ml/repro/`: model identity vs artifact
+  identity, `ArtifactSha256` (SHA-256 over exact bytes), runtime / quantization /
+  preprocessing / output-mapping / privacy identities, provenance + conversion
+  chain, and a composite `ReproCompositeIdentity` with byte-deterministic
+  canonical serialization (`ReproCanonicalSerializer`).
+- **Derived from 8B-15-1** via `ReproContractFactory` (A1 SHORTLISTED primary,
+  A2 CONDITIONAL fallback preserved).
+- **Honest artifact state:** the `.tflite` artifact is not available →
+  `ARTIFACT_PENDING`, no fabricated checksum/version; output labels unresolved.
+- **No evaluation change, no schema change, no production integration.** See
+  `docs/reproducibility.md`; 102 JVM tests in
+  `app/src/test/java/com/example/feedsense/analysis/ml/repro/`.

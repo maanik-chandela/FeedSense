@@ -2,6 +2,7 @@ package com.example.feedsense.data
 
 import android.content.Context
 import com.example.feedsense.analysis.DatasetExporter
+import com.example.feedsense.analysis.privacy.PrivacyExportPolicy
 import com.example.feedsense.repository.ModelFeedbackRepository
 import com.example.feedsense.repository.ReferenceRepository
 import com.example.feedsense.repository.SessionRepository
@@ -10,13 +11,17 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 /*
- * Milestone 7T.
+ * Milestone 7T + 8B-10.
  *
  * Android-side export manager. Reads the full research
  * dataset through the repositories, builds the JSON with
  * the pure DatasetExporter and writes it to app-private
  * storage (filesDir/exports) - no storage permission
  * needed. Returns the written file (or null on failure).
+ *
+ * 8B-10: exports default to the SAFE privacy policy
+ * (SANITIZED_METADATA_ONLY) - raw OCR text is never
+ * written to export files.
  */
 class ExportManager(
     context: Context
@@ -37,7 +42,9 @@ class ExportManager(
     suspend fun exportDataset(
         sessionRepository: SessionRepository,
         referenceRepository: ReferenceRepository,
-        feedbackRepository: ModelFeedbackRepository
+        feedbackRepository: ModelFeedbackRepository,
+        privacyPolicy: PrivacyExportPolicy =
+            PrivacyExportPolicy.SAFE_DEFAULT
     ): File? {
 
         return try {
@@ -50,7 +57,7 @@ class ExportManager(
                 DatasetExporter()
 
             val json =
-                exporter.buildJson(
+                exporter.buildJsonByPrivacyPolicy(
                     sessions =
                         sessionRepository.getAllSessions(),
                     feedItems =
@@ -60,7 +67,8 @@ class ExportManager(
                     feedback =
                         feedbackRepository.getAll(),
                     observations =
-                        sessionRepository.getAllObservations()
+                        sessionRepository.getAllObservations(),
+                    policy = privacyPolicy
                 )
 
             val fileName =

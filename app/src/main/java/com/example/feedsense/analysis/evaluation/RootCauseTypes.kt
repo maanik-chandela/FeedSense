@@ -56,6 +56,15 @@ object RootCauseTypes {
         "DATA_VS_PREDICTION_MISMATCH"
     const val CAUSE_TEMPORAL = "TEMPORAL_TIMING_ERROR"
 
+    // 8B-13 additions: privacy/capture-specific causes so a
+    // misclassification driven by the privacy layer or a blocked
+    // capture can be attributed explicitly rather than folded
+    // into the generic pipeline/evidence buckets.
+    const val CAUSE_PRIVACY_EVIDENCE_LOSS =
+        "PRIVACY_EVIDENCE_LOSS"
+    const val CAUSE_CAPTURE_UNAVAILABLE =
+        "CAPTURE_UNAVAILABLE"
+
     val ALL_CANDIDATE_CAUSES: List<String> = listOf(
         CAUSE_OCR_FAILURE,
         CAUSE_VISUAL_AMBIGUITY,
@@ -79,6 +88,8 @@ object RootCauseTypes {
         CAUSE_CLASSIFIER_CALIBRATION,
         CAUSE_DATA_VS_PREDICTION,
         CAUSE_TEMPORAL,
+        CAUSE_PRIVACY_EVIDENCE_LOSS,
+        CAUSE_CAPTURE_UNAVAILABLE,
         CAUSE_OTHER
     )
 
@@ -303,6 +314,10 @@ object RootCauseTypes {
             CAUSE_CLASSIFIER_CALIBRATION -> "Classifier confidence mis-calibrated"
             CAUSE_DATA_VS_PREDICTION -> "Prediction diverged from ground truth"
             CAUSE_TEMPORAL -> "Timing discrepancy"
+            CAUSE_PRIVACY_EVIDENCE_LOSS ->
+                "Evidence lost to privacy processing"
+            CAUSE_CAPTURE_UNAVAILABLE ->
+                "Capture unavailable (blocked/secure surface)"
             else -> cause
         }
     }

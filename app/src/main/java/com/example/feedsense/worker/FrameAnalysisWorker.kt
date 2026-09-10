@@ -15,11 +15,11 @@ import com.example.feedsense.analysis.dedup.DeduplicationMetrics
 import com.example.feedsense.analysis.dedup.FrameFilterEngine
 import com.example.feedsense.analysis.dedup.PerceptualHashEngine
 import com.example.feedsense.analysis.dedup.RetentionDecision
-import com.example.feedsense.analysis.privacy.PrivacySanitizationConfig
-import com.example.feedsense.analysis.privacy.PrivacySanitizer
-import com.example.feedsense.analysis.privacy.SanitizationMetrics
-import com.example.feedsense.analysis.privacy.SanitizationStatus
-import com.example.feedsense.analysis.privacy.SystemUIRegionDetector
+import com.example.feedsense.analysis.privacy.AndroidPrivacyRegionApplier
+import com.example.feedsense.analysis.privacy.EvidenceSanitizer
+import com.example.feedsense.analysis.privacy.PrivacyTextRedactor
+import com.example.feedsense.analysis.privacy.SanitizedEvidence
+import com.example.feedsense.analysis.privacy.defaultPrivacyPolicy
 import com.example.feedsense.model.CapturedFrame
 import com.example.feedsense.model.LabeledReference
 import java.io.File
@@ -71,20 +71,33 @@ class FrameAnalysisWorker(
     private val dedupMetrics =
         DeduplicationMetrics()
 
-    // Milestone 8B-4. Privacy sanitization.
-    private val sanitizationMetrics =
-        SanitizationMetrics()
+    /*
+     * Milestone 8B-10. Evidence sanitization pipeline.
+     *
+     * Wraps the 8B-4 rasterizer (via AndroidPrivacyRegionApplier)
+     * and adds OCR text redaction, a privacy policy, and a
+     * privacy-safe audit trail for every frame.
+     *
+     * The policy default is RESEARCH_MODE:
+     *   - capture continues if sanitization fails
+     *     (blockOnSanitizationFailure = false)
+     *   - sanitized frames are written to app-private
+     *     filesDir/sanitized so they persist for review.
+     */
+    private val privacyPolicy =
+        defaultPrivacyPolicy()
 
-    private val privacySanitizer =
-        PrivacySanitizer(
-            context = appContext,
-            config =
-                PrivacySanitizationConfig.DEFAULT,
-            detectors = listOf(
-                SystemUIRegionDetector()
-            ),
-            metrics = sanitizationMetrics
+    private val evidenceSanitizer =
+        EvidenceSanitizer(
+            policy = privacyPolicy,
+            regionApplier = AndroidPrivacyRegionApplier(
+                context = appContext,
+                policy = privacyPolicy
+            )
         )
+
+    private val textRedactor =
+        PrivacyTextRedactor()
 
     companion object {
 
@@ -255,44 +268,55 @@ class FrameAnalysisWorker(
             logFilterDecision(filterResult)
 
             // --------------------------------
-            // MILESTONE 8B-4: PRIVACY SANITIZE
+            // MILESTONE 8B-4 / 8B-10:
+            // EVIDENCE SANITIZE
             // --------------------------------
             //
             // Sanitize the frame before sending to
             // AI/OCR. Protected system UI regions are
             // redacted to prevent unnecessary exposure
-            // of sensitive information.
+            // of sensitive information. The 8B-10
+            // EvidenceSanitizer also redacts private
+            // identifiers in OCR text produced by the
+            // analysis step.
             //
-            // Failure policy: if sanitization fails,
-            // mark UNCERTAIN and continue with the
-            // raw frame (fail-open for pipeline, but
-            // privacy state is explicit).
+            // Failure policy: sanitization failures do
+            // NOT block capture (blockOnSanitizationFailure
+            // defaults to false). The worker falls back to
+            // the raw frame for analysis, but the failure
+            // status is explicit and recorded in the frame's
+            // analysis result JSON.
+            //
+            // Global logging rule: never log raw OCR text
+            // or screenshot paths; only the privacy-safe
+            // audit summary is logged.
 
-            val sanitizationResult =
-                privacySanitizer.sanitize(
-                    frameFile = file
+            val sanitizedOutputDir =
+                File(
+                    applicationContext.filesDir,
+                    "sanitized"
                 )
 
-            logSanitizationDecision(
-                sanitizationResult
-            )
+            val evidence =
+                evidenceSanitizer.sanitize(
+                    rawFrame = file,
+                    ocrText = null,
+                    frameId = frame.id,
+                    outputDir = sanitizedOutputDir
+                )
 
-            // Use sanitized frame for downstream
-            // if available and safe
+            logPrivacySanitization(evidence)
+
+            // Use the sanitized frame for downstream
+            // analysis when it is safe and available;
+            // otherwise fail-open to the raw frame.
             val analysisFile =
                 if (
-                    sanitizationResult
-                        .isSafeForDownstream &&
-                    sanitizationResult
-                        .transformedFramePath !=
-                        null
+                    evidence.isSafeForResearchUse &&
+                    evidence.sanitizedFrameFile.exists()
                 ) {
-                    File(
-                        sanitizationResult
-                            .transformedFramePath
-                    )
+                    evidence.sanitizedFrameFile
                 } else {
-                    // Fail-open: use original frame
                     file
                 }
 
@@ -373,10 +397,30 @@ class FrameAnalysisWorker(
                     analysisFile
                 )
 
+            // --------------------------------
+            // 8B-10: OCR TEXT REDACTION
+            // --------------------------------
+            //
+            // The analysis may carry sensitive identifiers
+            // in its OCR text. Those are redacted BEFORE
+            // the text is persisted to the analysis result
+            // JSON or any LabeledReference. Research content
+            // (e.g. "IPL", "YouTube", "Netflix") passes
+            // through untouched.
+
+            val redaction =
+                textRedactor.redact(
+                    analysis.visibleText ?: "",
+                    privacyPolicy
+                )
+
             val resultJson =
                 buildResultJson(
                     analysis,
-                    frameFingerprint
+                    frameFingerprint,
+                    redactedVisibleText =
+                        redaction.redacted,
+                    privacyEvidence = evidence
                 )
 
             // --------------------------------
@@ -419,7 +463,10 @@ class FrameAnalysisWorker(
                     analysis = analysis,
                     labelSource =
                         LabeledReference.LABEL_SOURCE_HUMAN,
-                    frameFingerprint = frameFingerprint
+                    frameFingerprint = frameFingerprint,
+                    redactedVisibleText =
+                        redaction.redacted,
+                    evidenceFilePath = analysisFile
                 )
 
             } else {
@@ -441,7 +488,10 @@ class FrameAnalysisWorker(
                         analysis = analysis,
                         labelSource =
                             LabeledReference.LABEL_SOURCE_CLOUD,
-                        frameFingerprint = frameFingerprint
+                        frameFingerprint = frameFingerprint,
+                        redactedVisibleText =
+                            redaction.redacted,
+                        evidenceFilePath = analysisFile
                     )
                 }
             }
@@ -476,7 +526,9 @@ class FrameAnalysisWorker(
         frame: CapturedFrame,
         analysis: FrameAnalysisResult,
         labelSource: String,
-        frameFingerprint: String?
+        frameFingerprint: String?,
+        redactedVisibleText: String?,
+        evidenceFilePath: File
     ) {
 
         try {
@@ -498,7 +550,12 @@ class FrameAnalysisWorker(
             referenceRepository.addPendingReview(
                 frameId = frame.id,
                 sessionId = frame.sessionId,
-                filePath = frame.filePath,
+                /*
+                 * 8B-10: store the SANITIZED frame path when
+                 * a safe sanitized edition exists. The raw
+                 * path is only used as a fail-open fallback.
+                 */
+                filePath = evidenceFilePath.absolutePath,
                 aiCategory = analysis.contentCategory,
                 aiConfidence = analysis.confidence,
                 aiSource = analysis.source,
@@ -508,7 +565,10 @@ class FrameAnalysisWorker(
                 platform = analysis.application,
                 topic = analysis.topic,
                 tone = analysis.tone,
-                visibleText = analysis.visibleText,
+                /*
+                 * 8B-10: persist only the REDACTED OCR text.
+                 */
+                visibleText = redactedVisibleText,
                 aiReason = analysis.classificationReason,
                 interactionSignals =
                     analysis.interactionSignals,
@@ -531,7 +591,9 @@ class FrameAnalysisWorker(
 
     private fun buildResultJson(
         result: FrameAnalysisResult,
-        frameFingerprint: String?
+        frameFingerprint: String?,
+        redactedVisibleText: String?,
+        privacyEvidence: SanitizedEvidence?
     ): JSONObject {
 
         return JSONObject().apply {
@@ -578,7 +640,12 @@ class FrameAnalysisWorker(
                 put("activity", it)
             }
 
-            result.visibleText?.let {
+            /*
+             * 8B-10: the OCR text stored here is the
+             * REDACTED version. Raw OCR text is never
+             * persisted.
+             */
+            redactedVisibleText?.let {
                 put("visibleText", it)
             }
 
@@ -683,6 +750,50 @@ class FrameAnalysisWorker(
                 "uncertain",
                 result.uncertain
             )
+
+            /*
+             * 8B-10: privacy sanitization metadata for the
+             * frame. Contains ONLY counts, statuses and
+             * versions - NO raw content.
+             */
+            privacyEvidence?.let { evidence ->
+                put(
+                    "privacySanitization",
+                    JSONObject().apply {
+                        put(
+                            "status",
+                            evidence.status.label
+                        )
+                        put(
+                            "policyVersion",
+                            evidence.audit.policyVersion
+                        )
+                        put(
+                            "sanitizationVersion",
+                            evidence.audit.sanitizationVersion
+                        )
+                        put(
+                            "regionsDetected",
+                            evidence.audit.regionsDetected
+                        )
+                        put(
+                            "regionTypes",
+                            JSONArray(
+                                evidence.audit.regionTypeLog.keys
+                            )
+                        )
+                        put(
+                            "redactedTextSegments",
+                            evidence.audit.redactedTextSegments
+                        )
+                        put(
+                            "evidenceLost",
+                            evidence.audit
+                                .evidenceLostDueToSanitization
+                        )
+                    }
+                )
+            }
         }
     }
 
@@ -755,22 +866,23 @@ class FrameAnalysisWorker(
     }
 
 // ========================================
-// MILESTONE 8B-4: SANITIZATION LOGGING
+// MILESTONE 8B-10: SANITIZATION LOGGING
 // ========================================
+//
+// Logging rule: NEVER log raw OCR text, screenshots,
+// or audit data containing raw content. Only the
+// privacy-safe summary payload is logged.
 
-    private fun logSanitizationDecision(
-        result:
-            com.example.feedsense.analysis.privacy
-                .SanitizationResult
-    ) {
+private fun logPrivacySanitization(
+    evidence: SanitizedEvidence
+) {
 
-        Log.d(
-            TAG,
-            "PRIVACY_SANITIZATION " +
-                    "status=${result.status} " +
-                    "regions=${result.regionCount} " +
-                    "version=${result.sanitizationVersion} " +
-                    "safe=${result.isSafeForDownstream}"
-        )
-    }
+    Log.d(
+        TAG,
+        "PRIVACY_SANITIZATION " +
+                evidence.audit
+                    .toPrivacyLogEntry()
+                    .toLogLine()
+    )
+}
 }
