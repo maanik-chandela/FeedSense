@@ -1,5 +1,7 @@
 package com.example.feedsense.analysis
 
+import com.example.feedsense.analysis.privacy.PrivacyExportPolicy
+import com.example.feedsense.analysis.privacy.PrivacyTextRedactor
 import com.example.feedsense.model.FeedItem
 import com.example.feedsense.model.LabeledReference
 import com.example.feedsense.model.ModelFeedback
@@ -79,8 +81,115 @@ class DatasetExporter {
 
             put("sessions", sessionArray(sessions))
             put("feedItems", feedItemArray(feedItems))
-            put("references", referenceArray(references))
-            put("feedback", feedbackArray(feedback))
+            put(
+                "references",
+                referenceArray(
+                    references,
+                    visibleTextProvider = { it },
+                    includeFilePath = true
+                )
+            )
+            put(
+                "feedback",
+                feedbackArray(
+                    feedback,
+                    visibleTextProvider = { it }
+                )
+            )
+            put("observations", observationArray(observations))
+        }
+    }
+
+    /*
+     * Milestone 8B-10.
+     *
+     * Privacy-policy-aware export builder.
+     *
+     * Unlike buildJson (which always emits raw visibleText),
+     * this overload applies an ExportPrivacyPolicy:
+     *
+     *   SANITIZED_METADATA_ONLY         visibleText omitted,
+     *                                   raw frame paths omitted
+     *   METADATA_AND_REDACTED_TEXT      visibleText replaced by
+     *                                   [REDACTED]-style redaction
+     *   DEBUG_RAW_TEXT                  raw OCR text and raw
+     *                                   frame paths (DEBUG only)
+     *
+     * The manifest records the exact policy so consumers can
+     * audit how the export was produced.
+     */
+    fun buildJsonByPrivacyPolicy(
+        sessions: List<ResearchSession>,
+        feedItems: List<FeedItem>,
+        references: List<LabeledReference>,
+        feedback: List<ModelFeedback>,
+        observations: List<ResearchObservation>,
+        policy: PrivacyExportPolicy =
+            PrivacyExportPolicy.SAFE_DEFAULT,
+        exportedAt: LocalDateTime = LocalDateTime.now()
+    ): JSONObject {
+
+        val redactor = PrivacyTextRedactor()
+
+        val visibleTextProvider: (String?) -> String? = {
+            raw -> when {
+                policy.exposesRawOcrText -> raw
+                policy.exposesRedactedOcrText -> {
+                    raw?.let { redactor.redact(it).redacted.trim() }
+                        ?.takeIf { it.isNotBlank() }
+                }
+                else -> null
+            }
+        }
+
+        val includeFilePath = policy.exposesRawOcrText
+
+        return JSONObject().apply {
+
+            put(
+                "manifest",
+                JSONObject().apply {
+                    put("format", FORMAT_NAME)
+                    put("schemaVersion", SCHEMA_VERSION)
+                    put("exportedAt", exportedAt.toString())
+                    put(
+                        "privacyExportMode",
+                        policy.mode.label
+                    )
+                    put(
+                        "privacyExportPolicyVersion",
+                        policy.policyVersion
+                    )
+                    put(
+                        "counts",
+                        JSONObject().apply {
+                            put("sessions", sessions.size)
+                            put("feedItems", feedItems.size)
+                            put("references", references.size)
+                            put("feedback", feedback.size)
+                            put("observations", observations.size)
+                        }
+                    )
+                }
+            )
+
+            put("sessions", sessionArray(sessions))
+            put("feedItems", feedItemArray(feedItems))
+            put(
+                "references",
+                referenceArray(
+                    references,
+                    visibleTextProvider = visibleTextProvider,
+                    includeFilePath = includeFilePath
+                )
+            )
+            put(
+                "feedback",
+                feedbackArray(
+                    feedback,
+                    visibleTextProvider = visibleTextProvider
+                )
+            )
             put("observations", observationArray(observations))
         }
     }
@@ -165,7 +274,9 @@ class DatasetExporter {
     // --------------------------------
 
     private fun referenceArray(
-        references: List<LabeledReference>
+        references: List<LabeledReference>,
+        visibleTextProvider: (String?) -> String?,
+        includeFilePath: Boolean
     ): JSONArray {
 
         return JSONArray().apply {
@@ -177,7 +288,7 @@ class DatasetExporter {
                         put("id", reference.id)
                         put("frameId", reference.frameId)
                         put("sessionId", reference.sessionId)
-                        put("filePath", reference.filePath)
+                        putOrNull("filePath", reference.filePath, includeFilePath)
                         putOrNull("feedItemId", reference.feedItemId)
                         putOrNull("aiCategory", reference.aiCategory)
                         putOrNull("aiConfidence", reference.aiConfidence)
@@ -187,7 +298,7 @@ class DatasetExporter {
                         putOrNull("platform", reference.platform)
                         putOrNull("topic", reference.topic)
                         putOrNull("tone", reference.tone)
-                        putOrNull("visibleText", reference.visibleText)
+                        putOrNull("visibleText", visibleTextProvider(reference.visibleText))
                         putOrNull("aiReason", reference.aiReason)
                         put("interactionSignals", stringArray(reference.interactionSignals))
                         putOrNull("frameFingerprint", reference.frameFingerprint)
@@ -208,7 +319,8 @@ class DatasetExporter {
     // --------------------------------
 
     private fun feedbackArray(
-        feedback: List<ModelFeedback>
+        feedback: List<ModelFeedback>,
+        visibleTextProvider: (String?) -> String?
     ): JSONArray {
 
         return JSONArray().apply {
@@ -222,7 +334,7 @@ class DatasetExporter {
                         putOrNull("feedItemId", item.feedItemId)
                         put("sessionId", item.sessionId)
                         putOrNull("platform", item.platform)
-                        putOrNull("visibleText", item.visibleText)
+                        putOrNull("visibleText", visibleTextProvider(item.visibleText))
                         put("interactionSignals", stringArray(item.interactionSignals))
                         putOrNull("originalCategory", item.originalCategory)
                         putOrNull("originalConfidence", item.originalConfidence)
@@ -289,6 +401,16 @@ class DatasetExporter {
         value: String?
     ) {
         if (value != null) {
+            put(key, value)
+        }
+    }
+
+    private fun JSONObject.putOrNull(
+        key: String,
+        value: String?,
+        include: Boolean
+    ) {
+        if (include && value != null) {
             put(key, value)
         }
     }

@@ -22,7 +22,16 @@ data class SanitizationResult(
     val regionCount: Int,
     val sanitizationVersion: String,
     val transformedFramePath: String?,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    /*
+     * Milestone 8B-10 additions. All defaulted so existing
+     * call sites (and 8B-4 tests) remain source-compatible.
+     */
+    val policyVersion: String =
+        PrivacySanitizationVersion.POLICY,
+    val privacyStatus: PrivacySanitizationStatus =
+        PrivacySanitizationStatus.fromLegacy(status),
+    val audit: SanitizationAudit? = null
 ) {
     val isSafeForDownstream: Boolean
         get() = status == SanitizationStatus.SANITIZED ||

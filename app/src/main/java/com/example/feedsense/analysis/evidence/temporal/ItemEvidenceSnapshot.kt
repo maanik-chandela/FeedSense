@@ -138,7 +138,19 @@ data class ItemEvidenceSnapshot(
     // --------------------------------
 
     val createdAtMs: Long,
-    val fusionDurationMs: Long
+    val fusionDurationMs: Long,
+
+    // --------------------------------
+    // PRIVACY (8B-10)
+    // --------------------------------
+    //
+    // Defaulted so all existing constructions remain
+    // source-compatible. Carries privacy/EVIDENCE metadata
+    // only - never raw content.
+
+    val privacyEvidence:
+        com.example.feedsense.analysis.privacy.PrivacyEvidenceMetadata =
+        com.example.feedsense.analysis.privacy.PrivacyEvidenceMetadata.NONE
 ) {
     /*
      * Primary candidate category (highest support).
